@@ -1,92 +1,50 @@
-Use this as the initial coding-agent prompt, with the UI mockup image attached.
+# AI Workbench
 
-```text
-Build a local-first web app called “AI Workbench”.
+AI Workbench is a local-first web application for creating, managing, and running reusable AI presets with structured outputs.
 
-Goal:
-Create a clean, simple personal web app for defining, saving, testing, and running reusable AI structured-output presets. The app should look like the attached clean light UI mockup: left sidebar, presets list, editor tabs, schema builder, run screen, history, and provider settings.
+It provides a clean interface for:
+- defining prompts
+- configuring models/providers
+- building output schemas visually
+- validating structured AI responses
+- saving run history
+- testing prompts quickly
 
-Tech stack:
-Backend:
-- Python
-- FastAPI
-- SQLite
-- SQLAlchemy or SQLModel
-- Pydantic
-- OpenAI Python SDK
-- Support OpenAI-compatible APIs via custom base_url
-- Simple local development setup
+The goal is to make repetitive AI workflows reusable, predictable, and easy to iterate on.
 
-Frontend:
-- React + Vite
-- TypeScript
-- Tailwind CSS
-- shadcn/ui-style components
-- Clean light theme
-- No unnecessary complexity
-- Easy to modify
+---
 
-Do not use Next.js unless absolutely necessary.
+# Features
 
-Core concept:
-A “Preset” is a reusable AI workflow containing:
-- name
-- description
+## Presets
+
+Create reusable AI workflows containing:
 - provider configuration
-- model
+- model selection
 - system prompt
 - user prompt template
-- output schema fields
+- structured output schema
 - model parameters
-- run history
 
-Main app layout:
-1. Left sidebar
-   - App name: AI Workbench
-   - New Preset button
-   - Presets
-   - History
-   - Settings
-   - Active provider card
+Example presets:
+- Bug Report Generator
+- Business Email Generator
+- Feature Spec Generator
+- Ticket Classifier
+- Database Mapping Generator
 
-2. Presets dashboard
-   - Search presets
-   - Filter by tag
-   - Sort by updated date
-   - Table/list with:
-     - name
-     - description
-     - tags
-     - model
-     - updated date
-     - actions: run, edit, duplicate, delete
+---
 
-3. Create/Edit Preset screen
-   Tabs:
-   - Configure
-   - Schema
-   - Run
-   - History
+## Structured Output Schema Builder
 
-Configure tab:
-- Preset name
-- Description
-- Provider
-- Base URL
-- Model
-- Temperature
-- Max tokens
-- Top P
-- Frequency penalty
-- Presence penalty
-- Stream response checkbox
-- System prompt textarea
-- User prompt template textarea
-- Quick test input area
-- Save Preset button
-
-Schema tab:
-Allow building a structured output schema visually.
+Visually define output fields with:
+- field name
+- type
+- required flag
+- descriptions
+- enum values
+- validation hints
+- example values
 
 Supported field types:
 - string
@@ -99,302 +57,346 @@ Supported field types:
 - object
 - list[object]
 
-Each field should have:
-- field name
-- type
-- required boolean
-- description
-- enum values if enum
-- validation hint / rule as text
-- example value
-- default value optional
+Generated schemas can be validated automatically against AI responses.
 
-Show:
-- field list on the left
-- selected field details in the middle
-- generated JSON Schema preview on the right
+---
 
-Run tab:
-- Large input textarea
-- Optional file upload / attachment field
-- Run button
-- Result view
-- Raw JSON view
-- Validation status
-- Copy JSON
-- Copy Markdown
-- Download JSON
-- Download Markdown
-- Show run metadata:
-  - model
-  - duration
-  - prompt tokens
-  - completion tokens
-  - created at
+## Multi-Provider Support
 
-History tab:
-- List previous runs for that preset
-- Status
-- date
+Supports OpenAI-compatible APIs using configurable base URLs.
+
+Examples:
+- OpenAI
+- OpenRouter
+- Local llama.cpp / Ollama
+- LM Studio
+- Custom OpenAI-compatible endpoints
+
+Each provider can define:
+- base URL
+- default model
+- API key reference
+- active status
+
+---
+
+## Run & Validate
+
+Run presets against:
+- logs
+- text input
+- pasted content
+- uploaded files (planned)
+
+Features:
+- structured JSON output
+- validation status
+- raw JSON view
+- copy/export JSON
+- copy/export Markdown
+- token usage
+- duration metrics
+- run history
+
+---
+
+# Screens
+
+## Main Areas
+
+### Dashboard
+- list presets
+- search/filter/sort
+- quick actions
+
+### Configure
+- provider
 - model
-- duration
-- tokens
-- View result
+- prompts
+- model parameters
 
-Global History screen:
-- Search runs
-- Filter by preset
-- Filter by status
-- Table of all runs
-- Click to open run details
+### Schema Builder
+- visual schema editor
+- JSON Schema preview
 
-Run Details screen:
-- Overview metadata
-- Input tab
-- Result tab
-- Raw JSON tab
-- Logs/errors tab
-- Attachments
-- Actions:
-  - copy input
-  - copy result
-  - download all
-  - run again
-  - delete run
+### Run
+- execute preset
+- inspect results
+- validate output
 
-Settings screen:
-Tabs:
-- Providers
-- General
-- API Keys
-- Templates
-- Import / Export
+### History
+- previous runs
+- run details
+- logs/errors
 
-Providers:
-- Add provider
-- Edit provider
-- Delete provider
-- Fields:
-  - name
-  - base_url
-  - default_model
-  - api_key_env_var or saved API key reference
-  - active boolean
+### Settings
+- providers
+- API keys
+- import/export
 
-Default providers:
-- OpenAI: https://api.openai.com/v1
-- OpenRouter: https://openrouter.ai/api/v1
-- Local Llama: http://localhost:11434/v1 or configurable
+---
 
-Data models:
-Provider:
-- id
-- name
-- base_url
-- default_model
-- api_key_ref
-- is_active
-- created_at
-- updated_at
+# Tech Stack
 
-Preset:
-- id
-- name
-- description
-- tags
-- provider_id
-- model
-- system_prompt
-- user_prompt_template
-- parameters JSON
-- schema JSON
-- created_at
-- updated_at
+## Backend
+- Python
+- FastAPI
+- SQLite
+- SQLAlchemy / SQLModel
+- Pydantic
+- OpenAI Python SDK
 
-SchemaField:
-Can either be stored as part of Preset.schema JSON or normalized. Prefer simple JSON storage first.
+## Frontend
+- React
+- Vite
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
 
-Run:
-- id
-- preset_id
-- provider_id
-- input_text
-- rendered_prompt
-- output_json
-- output_markdown optional
-- raw_response JSON
-- status: success/error
-- error_message
-- duration_ms
-- prompt_tokens
-- completion_tokens
-- total_tokens
-- model
-- created_at
+---
 
-API endpoints:
-Providers:
-- GET /api/providers
-- POST /api/providers
-- GET /api/providers/{id}
-- PUT /api/providers/{id}
-- DELETE /api/providers/{id}
+# Project Structure
 
-Presets:
-- GET /api/presets
-- POST /api/presets
-- GET /api/presets/{id}
-- PUT /api/presets/{id}
-- DELETE /api/presets/{id}
-- POST /api/presets/{id}/duplicate
-
-Runs:
-- GET /api/runs
-- GET /api/runs/{id}
-- GET /api/presets/{id}/runs
-- POST /api/presets/{id}/run
-- DELETE /api/runs/{id}
-
-Schema:
-- POST /api/schema/preview
-- POST /api/schema/validate-output
-
-LLM behavior:
-When running a preset:
-1. Load preset and provider.
-2. Render user prompt template using input text.
-   Example variable:
-   {{input}}
-3. Build JSON Schema from schema fields.
-4. Call OpenAI-compatible API using OpenAI SDK.
-5. Request structured JSON output.
-6. Validate output against generated Pydantic model or JSON Schema.
-7. Save run result.
-8. Return structured result and metadata.
-
-Use OpenAI SDK with configurable base_url:
-- api_key from environment variable or provider config
-- base_url from provider
-- model from preset
-
-For structured output:
-- Prefer JSON Schema response format where supported.
-- Also include fallback mode:
-  - ask model to return valid JSON only
-  - parse JSON
-  - validate locally
-
-Initial seed data:
-Create example presets:
-1. Bug Report Generator
-   Fields:
-   - title: string, required
-   - severity: enum low/medium/high/critical, required
-   - reproduction_steps: list[string], required
-   - expected_result: string, required
-   - actual_result: string, required
-   - possible_cause: string, optional
-   - suggested_fix: string, optional
-
-2. Business Email Generator
-   Fields:
-   - subject: string
-   - body: string
-   - tone: enum casual/professional/direct
-   - call_to_action: string
-
-3. Feature Spec Generator
-   Fields:
-   - feature_name: string
-   - problem: string
-   - proposed_solution: string
-   - user_stories: list[string]
-   - acceptance_criteria: list[string]
-   - risks: list[string]
-
-Design requirements:
-- Match the attached light UI mockup style.
-- Minimal, modern, lots of whitespace.
-- Blue accent color.
-- Rounded cards.
-- Clear tables.
-- Simple icons.
-- Everything should be visible and understandable.
-- Avoid overengineering.
-- No authentication for now.
-- Local-first.
-- Keep code clean and readable.
-- Use clear folder structure.
-- Add comments only where helpful.
-
-Suggested project structure:
-
+```text
 ai-workbench/
-  backend/
-    app/
-      main.py
-      database.py
-      models.py
-      schemas.py
-      crud.py
-      llm.py
-      routers/
-        presets.py
-        providers.py
-        runs.py
-        schema.py
-      seed.py
-    requirements.txt
-    .env.example
-  frontend/
-    src/
-      api/
-      components/
-      pages/
-      routes/
-      types/
-      utils/
-      App.tsx
-      main.tsx
-    package.json
-  README.md
-
-README should include:
-- What the app does
-- How to run backend
-- How to run frontend
-- How to configure API keys
-- Example provider configs
-- How to create a preset
-- How to run a preset
-
-Development priorities:
-Phase 1:
-- Backend CRUD
-- SQLite database
-- Providers
-- Presets
-- Schema builder data format
-- Run preset endpoint
-- Basic frontend views
-
-Phase 2:
-- Better schema builder UX
-- Run history
-- JSON/Markdown copy/export
-- Import/export presets
-
-Phase 3:
-- Streaming
-- File attachments
-- Preset versioning
-- Batch runs
-- More provider integrations
-
-Important:
-Start with a working backbone, not a perfect product.
-Favor simple implementation over abstract architecture.
-Use Pythonic backend code.
-Use typed frontend code.
-Make it easy to modify later.
+│
+├── backend/
+│   ├── app/
+│   │   ├── routers/
+│   │   ├── main.py
+│   │   ├── database.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   ├── crud.py
+│   │   ├── llm.py
+│   │   └── seed.py
+│   │
+│   ├── requirements.txt
+│   └── .env.example
+│
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   │
+│   └── package.json
+│
+└── README.md
 ```
+
+---
+
+# Local Development
+
+## Backend
+
+### Install
+
+```bash
+cd backend
+
+python -m venv venv
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### Configure Environment
+
+Create `.env`:
+
+```env
+OPENAI_API_KEY=your_key_here
+DATABASE_URL=sqlite:///./app.db
+```
+
+### Run Backend
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Backend will run on:
+
+```text
+http://localhost:8000
+```
+
+---
+
+## Frontend
+
+### Install
+
+```bash
+cd frontend
+
+npm install
+```
+
+### Run Frontend
+
+```bash
+npm run dev
+```
+
+Frontend will run on:
+
+```text
+http://localhost:5173
+```
+
+---
+
+# Example Provider Configurations
+
+## OpenAI
+
+```text
+Base URL:
+https://api.openai.com/v1
+```
+
+## OpenRouter
+
+```text
+Base URL:
+https://openrouter.ai/api/v1
+```
+
+## Ollama
+
+```text
+Base URL:
+http://localhost:11434/v1
+```
+
+---
+
+# Example Workflow
+
+## 1. Create Preset
+
+Example:
+- Bug Report Generator
+
+Define:
+- prompts
+- model
+- schema fields
+
+---
+
+## 2. Add Schema
+
+Example fields:
+
+```json
+{
+  "title": "string",
+  "severity": "enum",
+  "reproduction_steps": "list[string]",
+  "expected_result": "string",
+  "actual_result": "string"
+}
+```
+
+---
+
+## 3. Run Preset
+
+Paste:
+- logs
+- stack traces
+- requirements
+- notes
+
+AI Workbench:
+- renders prompt
+- calls model
+- validates output
+- saves run history
+
+---
+
+# API Overview
+
+## Providers
+
+```http
+GET    /api/providers
+POST   /api/providers
+PUT    /api/providers/{id}
+DELETE /api/providers/{id}
+```
+
+## Presets
+
+```http
+GET    /api/presets
+POST   /api/presets
+GET    /api/presets/{id}
+PUT    /api/presets/{id}
+DELETE /api/presets/{id}
+POST   /api/presets/{id}/duplicate
+```
+
+## Runs
+
+```http
+GET    /api/runs
+GET    /api/runs/{id}
+POST   /api/presets/{id}/run
+DELETE /api/runs/{id}
+```
+
+---
+
+# Roadmap
+
+## Phase 1
+- preset CRUD
+- providers
+- schema builder
+- run execution
+- run history
+- structured validation
+
+## Phase 2
+- markdown export
+- import/export presets
+- attachments
+- streaming responses
+
+## Phase 3
+- preset versioning
+- batch runs
+- prompt templates
+- local model optimizations
+- workflow chaining
+
+---
+
+# Design Philosophy
+
+AI Workbench is intentionally:
+- local-first
+- simple
+- fast to iterate on
+- easy to modify
+- schema-oriented
+- provider-agnostic
+
+The focus is practical AI workflows, not building a large SaaS platform.
+
+---
+
+# License
+
+MIT
