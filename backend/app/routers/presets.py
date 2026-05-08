@@ -1,3 +1,4 @@
+import logging
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
@@ -7,6 +8,7 @@ from app import crud, schemas, llm
 from app.models import Run
 
 router = APIRouter(prefix="/api/presets", tags=["presets"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/generate/", response_model=schemas.PresetGenerateResponse)
@@ -33,6 +35,7 @@ def generate_preset(
     try:
         result = llm.generate_preset_draft(provider, request.prompt)
     except Exception as e:
+        logger.exception("Preset draft generation failed")
         raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
     # Validate and map schema field types
@@ -183,6 +186,7 @@ def run_preset(
         run.tokens_prompt = result["tokens_prompt"]
         run.tokens_completion = result["tokens_completion"]
     except Exception as e:
+        logger.exception("Preset run failed", extra={"preset_id": preset_id, "run_id": run.id, "provider_id": provider_id})
         run.status = "failed"
         run.error = str(e)
 
