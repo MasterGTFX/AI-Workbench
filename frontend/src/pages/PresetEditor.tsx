@@ -1,0 +1,1015 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Save,
+  Play,
+  Plus,
+  Trash2,
+  Copy,
+  Check,
+  X,
+  Pencil,
+  Loader2,
+  FileJson,
+  FileText,
+  Clock,
+  Cpu,
+  Hash,
+  Layers,
+  ChevronDown,
+  Eye,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectItem } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { apiClient } from "@/api/client";
+import { Preset, Provider, SchemaField, Run } from "@/types";
+import {
+  formatDate,
+  formatDuration,
+  buildJsonSchema,
+  copyToClipboard,
+  downloadJson,
+  downloadMarkdown,
+} from "@/utils/helpers";
+import toast from "react-hot-toast";
+
+const FIELD_TYPES = [
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "enum",
+  "list[string]",
+  "list[number]",
+  "object",
+  "list[object]",
+];
+
+const EMPTY_FIELD: SchemaField = {
+  name: "",
+  type: "string",
+  required: true,
+  description: "",
+  enum_values: "",
+  validation_hint: "",
+  example: "",
+  default_value: "",
+  order: 0,
+};
+
+const EMPTY_PRESET: Partial<Preset> = {
+  name: "New Preset",
+  description: "",
+  tags: "",
+  provider_id: undefined,
+  model: "gpt-4o",
+  system_prompt: "",
+  user_prompt_template: "",
+  temperature: 0.7,
+  max_tokens: 2000,
+  top_p: 1.0,
+  frequency_penalty: 0.0,
+  presence_penalty: 0.0,
+  stream: false,
+  schema_fields: [],
+};
+
+export default function PresetEditor() {
+  const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isNew = id === "new";
+  const presetId = isNew ? null : Number(id);
+
+  const [preset, setPreset] = useState<Partial<Preset>>(EMPTY_PRESET);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "configure");
+  const [selectedFieldId, setSelectedFieldId] = useState<number | "new" | null>(null);
+  const [fieldForm, setFieldForm] = useState<SchemaField>({ ...EMPTY_FIELD });
+
+  // Run tab state
+  const [runInput, setRunInput] = useState("");
+  const [runResult, setRunResult] = useState<Run | null>(null);
+  const [running, setRunning] = useState(false);
+  const [runOverrides, setRunOverrides] = useState({ temperature: "", max_tokens: "", top_p: "" });
+
+  // History tab state
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [runsLoading, setRunsLoading] = useState(false);
+  const [viewRunId, setViewRunId] = useState<number | null>(null);
+
+  // Quick test state
+  const [testInput, setTestInput] = useState("");
+  const [testRunning, setTestRunning] = useState(false);
+
+  useEffect(() => {
+    fetchProviders();
+    if (presetId) {
+      fetchPreset(presetId);
+      fetchRuns(presetId);
+    } else {
+      setLoading(false);
+    }
+  }, [presetId]);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
+  async function fetchProviders() {
+    try {
+      const res = await apiClient.get<Provider[]>("/providers");
+      setProviders(res.data);
+    } catch {
+      toast.error("Failed to load providers");
+    }
+  }
+
+  async function fetchPreset(pid: number) {
+    setLoading(true);
+    try {
+      const res = await apiClient.get<Preset>(`/presets/${pid}`);
+      setPreset(res.data);
+    } catch {
+      toast.error("Failed to load preset");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchRuns(pid: number) {
+    setRunsLoading(true);
+    try {
+      const res = await apiClient.get<Run[]>(`/runs?preset_id=${pid}`);
+      setRuns(res.data);
+    } catch {
+      // ignore
+    } finally {
+      setRunsLoading(false);
+    }
+  }
+
+  function handleTabChange(tab: string) {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  }
+
+  async function handleSave() {
+    if (!preset.name) {
+      toast.error("Preset name is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        ...preset,
+        schema_fields: preset.schema_fields || [],
+      };
+      if (isNew) {
+        const res = await apiClient.post<Preset>("/presets", payload);
+        toast.success("Preset created");
+        navigate(`/presets/${res.data.id}?tab=configure`);
+      } else if (presetId) {
+        await apiClient.put(`/presets/${presetId}`, payload);
+        toast.success("Preset saved");
+        if (presetId) fetchPreset(presetId);
+      }
+    } catch {
+      toast.error("Failed to save preset");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updatePreset(updates: Partial<Preset>) {
+    setPreset((prev) => ({ ...prev, ...updates }));
+  }
+
+  function handleProviderChange(providerId: string) {
+    const pid = providerId ? Number(providerId) : undefined;
+    const provider = providers.find((p) => p.id === pid);
+    updatePreset({
+      provider_id: pid,
+      model: provider?.default_model || preset.model,
+    });
+  }
+
+  // Schema field management
+  function addField() {
+    const newField: SchemaField = {
+      ...EMPTY_FIELD,
+      order: (preset.schema_fields || []).length,
+    };
+    setFieldForm(newField);
+    setSelectedFieldId("new");
+  }
+
+  function selectField(field: SchemaField) {
+    setFieldForm({ ...field });
+    setSelectedFieldId(field.id || null);
+  }
+
+  function saveField() {
+    if (!fieldForm.name.trim()) {
+      toast.error("Field name is required");
+      return;
+    }
+    const fields = [...(preset.schema_fields || [])];
+    if (selectedFieldId === "new") {
+      const newField = { ...fieldForm, id: -(fields.length + 1) };
+      fields.push(newField);
+    } else {
+      const idx = fields.findIndex((f) => f.id === selectedFieldId);
+      if (idx >= 0) fields[idx] = { ...fieldForm };
+    }
+    updatePreset({ schema_fields: fields });
+    setSelectedFieldId(null);
+    setFieldForm({ ...EMPTY_FIELD });
+  }
+
+  function deleteField() {
+    if (selectedFieldId == null || selectedFieldId === "new") {
+      setSelectedFieldId(null);
+      return;
+    }
+    const fields = (preset.schema_fields || []).filter((f) => f.id !== selectedFieldId);
+    updatePreset({ schema_fields: fields });
+    setSelectedFieldId(null);
+  }
+
+  function moveField(index: number, direction: -1 | 1) {
+    const fields = [...(preset.schema_fields || [])];
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= fields.length) return;
+    [fields[index], fields[newIndex]] = [fields[newIndex], fields[index]];
+    fields.forEach((f, i) => (f.order = i));
+    updatePreset({ schema_fields: fields });
+  }
+
+  const jsonSchema = useMemo(() => {
+    try {
+      return buildJsonSchema(preset.schema_fields || []);
+    } catch {
+      return {};
+    }
+  }, [preset.schema_fields]);
+
+  async function handleRun() {
+    if (!presetId) {
+      toast.error("Save the preset before running");
+      return;
+    }
+    if (!runInput.trim()) {
+      toast.error("Input is required");
+      return;
+    }
+    setRunning(true);
+    try {
+      const overrides: Record<string, any> = {};
+      if (runOverrides.temperature !== "") overrides.temperature = Number(runOverrides.temperature);
+      if (runOverrides.max_tokens !== "") overrides.max_tokens = Number(runOverrides.max_tokens);
+      if (runOverrides.top_p !== "") overrides.top_p = Number(runOverrides.top_p);
+      const res = await apiClient.post<Run>(`/presets/${presetId}/run`, {
+        input: runInput,
+        overrides: Object.keys(overrides).length ? overrides : undefined,
+      });
+      setRunResult(res.data);
+      toast.success("Run completed");
+      if (presetId) fetchRuns(presetId);
+    } catch {
+      toast.error("Run failed");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function handleQuickTest() {
+    if (!presetId) {
+      toast.error("Save the preset before testing");
+      return;
+    }
+    if (!testInput.trim()) {
+      toast.error("Input is required");
+      return;
+    }
+    setTestRunning(true);
+    try {
+      const res = await apiClient.post<Run>(`/presets/${presetId}/run`, { input: testInput });
+      toast.success(`Test completed - ${res.data.status}`);
+    } catch {
+      toast.error("Test failed");
+    } finally {
+      setTestRunning(false);
+    }
+  }
+
+  async function handleDeleteRun(runId: number) {
+    try {
+      await apiClient.delete(`/runs/${runId}`);
+      toast.success("Run deleted");
+      if (presetId) fetchRuns(presetId);
+    } catch {
+      toast.error("Failed to delete run");
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Top bar */}
+      <div className="flex items-center justify-between border-b px-6 py-3">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Input
+              value={preset.name || ""}
+              onChange={(e) => updatePreset({ name: e.target.value })}
+              className="h-8 border-0 text-lg font-bold shadow-none focus-visible:ring-0 px-0"
+              placeholder="Preset name"
+            />
+            <Pencil className="h-4 w-4 text-slate-400" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList>
+              <TabsTrigger value="configure">Configure</TabsTrigger>
+              <TabsTrigger value="schema">Schema</TabsTrigger>
+              <TabsTrigger value="run">Run</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button variant="outline" onClick={() => navigate("/")}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="gap-2 bg-blue-600 hover:bg-blue-700">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save Preset
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-auto p-6">
+        {activeTab === "configure" && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Model / Provider */}
+              <div className="rounded-lg border p-5">
+                <h3 className="mb-4 text-sm font-semibold text-slate-900">Model / Provider</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label className="mb-1 block">Provider</Label>
+                    <Select
+                      value={preset.provider_id ? String(preset.provider_id) : ""}
+                      onValueChange={handleProviderChange}
+                      placeholder="Select provider"
+                    >
+                      <SelectItem value="">None</SelectItem>
+                      {providers.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Base URL</Label>
+                    <Input
+                      value={providers.find((p) => p.id === preset.provider_id)?.base_url || ""}
+                      disabled
+                      placeholder="https://api.openai.com/v1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Model</Label>
+                    <Input
+                      value={preset.model || ""}
+                      onChange={(e) => updatePreset({ model: e.target.value })}
+                      placeholder="gpt-4o"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Tags</Label>
+                    <Input
+                      value={preset.tags || ""}
+                      onChange={(e) => updatePreset({ tags: e.target.value })}
+                      placeholder="bug,email,support"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="mb-1 block">Description</Label>
+                    <Input
+                      value={preset.description || ""}
+                      onChange={(e) => updatePreset({ description: e.target.value })}
+                      placeholder="Short description of what this preset does"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Prompts */}
+              <div className="rounded-lg border p-5">
+                <h3 className="mb-4 text-sm font-semibold text-slate-900">Prompts</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="mb-1 block">System Prompt</Label>
+                    <Textarea
+                      value={preset.system_prompt || ""}
+                      onChange={(e) => updatePreset({ system_prompt: e.target.value })}
+                      placeholder="You are a helpful assistant..."
+                      rows={4}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">User Prompt Template</Label>
+                    <Textarea
+                      value={preset.user_prompt_template || ""}
+                      onChange={(e) => updatePreset({ user_prompt_template: e.target.value })}
+                      placeholder="Analyze the following: {{input}}"
+                      rows={4}
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Use {"{{input}}"} to insert the user input at runtime.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Parameters */}
+              <div className="rounded-lg border p-5">
+                <h3 className="mb-4 text-sm font-semibold text-slate-900">Default Settings</h3>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div>
+                    <Label className="mb-1 block">Temperature</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={preset.temperature ?? 0.7}
+                      onChange={(e) => updatePreset({ temperature: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Max Tokens</Label>
+                    <Input
+                      type="number"
+                      value={preset.max_tokens ?? 2000}
+                      onChange={(e) => updatePreset({ max_tokens: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Top P</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={preset.top_p ?? 1.0}
+                      onChange={(e) => updatePreset({ top_p: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Frequency Penalty</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={preset.frequency_penalty ?? 0.0}
+                      onChange={(e) => updatePreset({ frequency_penalty: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Presence Penalty</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={preset.presence_penalty ?? 0.0}
+                      onChange={(e) => updatePreset({ presence_penalty: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <Switch
+                      checked={preset.stream || false}
+                      onCheckedChange={(v) => updatePreset({ stream: v })}
+                    />
+                    <Label>Stream response</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Test */}
+            <div className="rounded-lg border p-5">
+              <h3 className="mb-4 text-sm font-semibold text-slate-900">Quick Test</h3>
+              <Textarea
+                value={testInput}
+                onChange={(e) => setTestInput(e.target.value)}
+                placeholder="Paste logs or input here..."
+                rows={8}
+                className="mb-3"
+              />
+              <Button
+                onClick={handleQuickTest}
+                disabled={testRunning}
+                className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                {testRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                Run Test
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "schema" && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 h-full">
+            {/* Fields list */}
+            <div className="rounded-lg border p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900">Fields</h3>
+                <Button size="sm" variant="outline" onClick={addField} className="gap-1">
+                  <Plus className="h-3 w-3" /> Add Field
+                </Button>
+              </div>
+              <div className="space-y-1">
+                {(preset.schema_fields || []).map((field, idx) => (
+                  <div
+                    key={field.id || idx}
+                    onClick={() => selectField(field)}
+                    className={`flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${
+                      selectedFieldId === field.id
+                        ? "bg-blue-50 text-blue-700"
+                        : "hover:bg-slate-50 text-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{field.name}</span>
+                      <span className="text-xs text-slate-500">{field.type}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {field.required && <span className="text-xs text-red-500">*</span>}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveField(idx, -1);
+                        }}
+                        className="rounded p-0.5 hover:bg-slate-200 disabled:opacity-30"
+                        disabled={idx === 0}
+                      >
+                        <ChevronDown className="h-3 w-3 rotate-180" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveField(idx, 1);
+                        }}
+                        className="rounded p-0.5 hover:bg-slate-200 disabled:opacity-30"
+                        disabled={idx === (preset.schema_fields || []).length - 1}
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {(preset.schema_fields || []).length === 0 && (
+                  <div className="py-8 text-center text-sm text-slate-500">
+                    No fields yet. Click "Add Field" to start.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Field details */}
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-4 text-sm font-semibold text-slate-900">Field Details</h3>
+              {selectedFieldId != null ? (
+                <div className="space-y-4">
+                  <div>
+                    <Label className="mb-1 block">Name</Label>
+                    <Input
+                      value={fieldForm.name}
+                      onChange={(e) => setFieldForm({ ...fieldForm, name: e.target.value })}
+                      placeholder="field_name"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Type</Label>
+                    <Select
+                      value={fieldForm.type}
+                      onValueChange={(v) => setFieldForm({ ...fieldForm, type: v })}
+                    >
+                      {FIELD_TYPES.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={fieldForm.required}
+                      onCheckedChange={(v) => setFieldForm({ ...fieldForm, required: v })}
+                    />
+                    <Label>Required</Label>
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Description</Label>
+                    <Input
+                      value={fieldForm.description || ""}
+                      onChange={(e) => setFieldForm({ ...fieldForm, description: e.target.value })}
+                      placeholder="Field description"
+                    />
+                  </div>
+                  {fieldForm.type === "enum" && (
+                    <div>
+                      <Label className="mb-1 block">Enum Values (comma separated)</Label>
+                      <Input
+                        value={fieldForm.enum_values || ""}
+                        onChange={(e) => setFieldForm({ ...fieldForm, enum_values: e.target.value })}
+                        placeholder="low, medium, high"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <Label className="mb-1 block">Validation Hint</Label>
+                    <Input
+                      value={fieldForm.validation_hint || ""}
+                      onChange={(e) => setFieldForm({ ...fieldForm, validation_hint: e.target.value })}
+                      placeholder="e.g. max length 100"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Example</Label>
+                    <Input
+                      value={fieldForm.example || ""}
+                      onChange={(e) => setFieldForm({ ...fieldForm, example: e.target.value })}
+                      placeholder="Example value"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Default Value</Label>
+                    <Input
+                      value={fieldForm.default_value || ""}
+                      onChange={(e) => setFieldForm({ ...fieldForm, default_value: e.target.value })}
+                      placeholder="Default (optional)"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={saveField} className="gap-1 bg-blue-600 hover:bg-blue-700">
+                      <Check className="h-4 w-4" /> Save Field
+                    </Button>
+                    <Button variant="outline" onClick={deleteField} className="gap-1 text-red-600 hover:text-red-700">
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </Button>
+                    <Button variant="ghost" onClick={() => setSelectedFieldId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-sm text-slate-500">
+                  Select a field to edit its details.
+                </div>
+              )}
+            </div>
+
+            {/* Schema preview */}
+            <div className="rounded-lg border p-4">
+              <h3 className="mb-4 text-sm font-semibold text-slate-900">Schema Preview</h3>
+              <pre className="rounded-md bg-slate-900 p-4 text-xs text-green-400 overflow-auto max-h-[600px]">
+                {JSON.stringify(jsonSchema, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "run" && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 h-full">
+            {/* Input panel */}
+            <div className="space-y-4">
+              <div className="rounded-lg border p-5">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">Input</h3>
+                <Textarea
+                  value={runInput}
+                  onChange={(e) => setRunInput(e.target.value)}
+                  placeholder="Paste logs or input here..."
+                  rows={12}
+                />
+                <div className="mt-3 flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-1" disabled>
+                    <Plus className="h-4 w-4" /> Add File
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setRunInput("")}>
+                    Clear
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-5">
+                <h3 className="mb-3 text-sm font-semibold text-slate-900">Run Settings</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="mb-1 block text-xs">Temperature</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={runOverrides.temperature}
+                      onChange={(e) => setRunOverrides({ ...runOverrides, temperature: e.target.value })}
+                      placeholder={String(preset.temperature ?? 0.7)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block text-xs">Max Tokens</Label>
+                    <Input
+                      type="number"
+                      value={runOverrides.max_tokens}
+                      onChange={(e) => setRunOverrides({ ...runOverrides, max_tokens: e.target.value })}
+                      placeholder={String(preset.max_tokens ?? 2000)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block text-xs">Top P</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={runOverrides.top_p}
+                      onChange={(e) => setRunOverrides({ ...runOverrides, top_p: e.target.value })}
+                      placeholder={String(preset.top_p ?? 1.0)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Result panel */}
+            <div className="space-y-4">
+              <div className="rounded-lg border p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900">Result</h3>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={handleRun}
+                      disabled={running}
+                    >
+                      {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                      Run
+                    </Button>
+                  </div>
+                </div>
+
+                {runResult ? (
+                  <div className="space-y-4">
+                    <Tabs defaultValue="result">
+                      <TabsList>
+                        <TabsTrigger value="result">Result</TabsTrigger>
+                        <TabsTrigger value="raw">Raw JSON</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="result">
+                        <div className="rounded-md border bg-slate-50 p-4">
+                          <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                            {(() => {
+                              try {
+                                return JSON.stringify(JSON.parse(runResult.output || "{}"), null, 2);
+                              } catch {
+                                return runResult.output || "No output";
+                              }
+                            })()}
+                          </pre>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="raw">
+                        <div className="rounded-md border bg-slate-50 p-4">
+                          <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                            {runResult.raw_response || runResult.output || "No output"}
+                          </pre>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => {
+                          copyToClipboard(runResult.output || "").then(() => toast.success("Copied JSON"));
+                        }}
+                      >
+                        <Copy className="h-3 w-3" /> Copy JSON
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => {
+                          const md = "```json\n" + (runResult.output || "") + "\n```";
+                          copyToClipboard(md).then(() => toast.success("Copied Markdown"));
+                        }}
+                      >
+                        <FileText className="h-3 w-3" /> Copy Markdown
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => downloadJson(JSON.parse(runResult.output || "{}"), `result-${runResult.id}.json`)}
+                      >
+                        <FileJson className="h-3 w-3" /> Download JSON
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => downloadMarkdown("```json\n" + (runResult.output || "") + "\n```", `result-${runResult.id}.md`)}
+                      >
+                        <FileText className="h-3 w-3" /> Download Markdown
+                      </Button>
+                    </div>
+
+                    {/* Validation */}
+                    <div className="rounded-md border p-3">
+                      <div className="mb-1 text-xs font-semibold text-slate-500">Validation</div>
+                      <div className="flex items-center gap-2 text-sm">
+                        {runResult.status === "success" ? (
+                          <>
+                            <Check className="h-4 w-4 text-green-600" />
+                            <span className="text-green-700">Schema valid</span>
+                          </>
+                        ) : (
+                          <>
+                            <X className="h-4 w-4 text-red-600" />
+                            <span className="text-red-700">{runResult.error || "Validation failed"}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Run Info */}
+                    <div className="rounded-md border p-3">
+                      <div className="mb-2 text-xs font-semibold text-slate-500">Run Info</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex items-center gap-1 text-slate-600">
+                          <Clock className="h-3 w-3" /> {formatDate(runResult.created_at)}
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600">
+                          <Cpu className="h-3 w-3" /> {runResult.model}
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600">
+                          <Hash className="h-3 w-3" /> Tokens: {(runResult.tokens_prompt || 0) + (runResult.tokens_completion || 0)}
+                        </div>
+                        <div className="flex items-center gap-1 text-slate-600">
+                          <Layers className="h-3 w-3" /> Duration: {formatDuration(runResult.duration_ms)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex h-48 items-center justify-center text-sm text-slate-500">
+                    Run the preset to see results here.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "history" && (
+          <div>
+            <h3 className="mb-4 text-lg font-semibold text-slate-900">Run History</h3>
+            {runsLoading ? (
+              <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : runs.length === 0 ? (
+              <div className="flex h-64 items-center justify-center text-slate-500">
+                No runs yet.
+              </div>
+            ) : (
+              <div className="rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-slate-50">
+                      <th className="px-4 py-3 text-left font-medium text-slate-600">Date</th>
+                      <th className="px-4 py-3 text-left font-medium text-slate-600">Input</th>
+                      <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
+                      <th className="px-4 py-3 text-left font-medium text-slate-600">Model</th>
+                      <th className="px-4 py-3 text-left font-medium text-slate-600">Duration</th>
+                      <th className="px-4 py-3 text-left font-medium text-slate-600">Tokens</th>
+                      <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {runs.map((run) => (
+                      <tr key={run.id} className="border-b hover:bg-slate-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                          {formatDate(run.created_at)}
+                        </td>
+                        <td className="px-4 py-3 max-w-xs truncate text-slate-600">
+                          {run.input}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={run.status === "success" ? "success" : "error"}>
+                            {run.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">{run.model}</td>
+                        <td className="px-4 py-3 text-slate-600">{formatDuration(run.duration_ms)}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {(run.tokens_prompt || 0) + (run.tokens_completion || 0)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => setViewRunId(run.id)}>
+                              <Eye className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => handleDeleteRun(run.id)}>
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Run Details Dialog */}
+      {viewRunId && (
+        <Dialog open={true} onOpenChange={() => setViewRunId(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Run Details</DialogTitle>
+              <DialogDescription>View run details and output</DialogDescription>
+            </DialogHeader>
+            {(() => {
+              const run = runs.find((r) => r.id === viewRunId);
+              if (!run) return <div>Run not found</div>;
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div><span className="text-slate-500">Date:</span> {formatDate(run.created_at)}</div>
+                    <div><span className="text-slate-500">Model:</span> {run.model}</div>
+                    <div><span className="text-slate-500">Status:</span> <Badge variant={run.status === "success" ? "success" : "error"}>{run.status}</Badge></div>
+                    <div><span className="text-slate-500">Duration:</span> {formatDuration(run.duration_ms)}</div>
+                    <div><span className="text-slate-500">Tokens:</span> {(run.tokens_prompt || 0) + (run.tokens_completion || 0)}</div>
+                  </div>
+                  <div>
+                    <div className="mb-1 text-xs font-semibold text-slate-500">Input</div>
+                    <pre className="rounded-md border bg-slate-50 p-3 text-sm whitespace-pre-wrap">{run.input}</pre>
+                  </div>
+                  <div>
+                    <div className="mb-1 text-xs font-semibold text-slate-500">Output</div>
+                    <pre className="rounded-md border bg-slate-50 p-3 text-sm whitespace-pre-wrap">
+                      {(() => {
+                        try { return JSON.stringify(JSON.parse(run.output || "{}"), null, 2); }
+                        catch { return run.output || "No output"; }
+                      })()}
+                    </pre>
+                  </div>
+                  {run.error && (
+                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+                      {run.error}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setViewRunId(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}

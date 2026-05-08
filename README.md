@@ -3,159 +3,146 @@
 AI Workbench is a local-first web application for creating, managing, and running reusable AI presets with structured outputs.
 
 It provides a clean interface for:
-- defining prompts
-- configuring models/providers
-- building output schemas visually
-- validating structured AI responses
-- saving run history
-- testing prompts quickly
+- Defining prompts
+- Configuring models/providers
+- Building output schemas visually
+- Validating structured AI responses
+- Saving run history
+- Testing prompts quickly
 
 The goal is to make repetitive AI workflows reusable, predictable, and easy to iterate on.
 
 ---
 
-# Features
+## Features
 
-## Presets
+### Presets
 
 Create reusable AI workflows containing:
-- provider configuration
-- model selection
-- system prompt
-- user prompt template
-- structured output schema
-- model parameters
+- Provider configuration
+- Model selection
+- System prompt
+- User prompt template
+- Structured output schema
+- Model parameters
 
-Example presets:
+Example presets included out of the box:
 - Bug Report Generator
 - Business Email Generator
 - Feature Spec Generator
-- Ticket Classifier
-- Database Mapping Generator
+- DB Import Mapper
+- Support Ticket Classifier
 
----
-
-## Structured Output Schema Builder
+### Structured Output Schema Builder
 
 Visually define output fields with:
-- field name
-- type
-- required flag
-- descriptions
-- enum values
-- validation hints
-- example values
+- Field name
+- Type (string, number, integer, boolean, enum, list[string], list[number], object, list[object])
+- Required flag
+- Description
+- Enum values
+- Validation hints
+- Example values
+- Default values
 
-Supported field types:
-- string
-- number
-- integer
-- boolean
-- enum
-- list[string]
-- list[number]
-- object
-- list[object]
+Generated schemas are automatically validated against AI responses.
 
-Generated schemas can be validated automatically against AI responses.
-
----
-
-## Multi-Provider Support
+### Multi-Provider Support
 
 Supports OpenAI-compatible APIs using configurable base URLs.
 
-Examples:
-- OpenAI
-- OpenRouter
-- Local llama.cpp / Ollama
-- LM Studio
-- Custom OpenAI-compatible endpoints
+Pre-configured providers:
+- OpenAI (`https://api.openai.com/v1`)
+- OpenRouter (`https://openrouter.ai/api/v1`)
+- Local Llama / Ollama (`http://localhost:11434/v1`)
 
 Each provider can define:
-- base URL
-- default model
-- API key reference
-- active status
+- Base URL
+- Default model
+- API key
+- Active status
+
+### Run & Validate
+
+Run presets against text input and get:
+- Structured JSON output
+- Validation status
+- Raw JSON view
+- Copy/export JSON
+- Copy/export Markdown
+- Token usage
+- Duration metrics
+- Run history
 
 ---
 
-## Run & Validate
-
-Run presets against:
-- logs
-- text input
-- pasted content
-- uploaded files (planned)
-
-Features:
-- structured JSON output
-- validation status
-- raw JSON view
-- copy/export JSON
-- copy/export Markdown
-- token usage
-- duration metrics
-- run history
-
----
-
-# Screens
-
-## Main Areas
+## Screens
 
 ### Dashboard
-- list presets
-- search/filter/sort
-- quick actions
+- List presets
+- Search/filter/sort
+- Quick actions (run, edit, duplicate, delete)
+- Table and card views
+- Pagination
 
-### Configure
-- provider
-- model
-- prompts
-- model parameters
+### Preset Editor
 
-### Schema Builder
-- visual schema editor
+**Configure Tab**
+- Provider & model selection
+- System & user prompts
+- Model parameters (temperature, max tokens, top_p, etc.)
+- Quick test panel
+
+**Schema Tab**
+- Visual schema editor
+- Field type selection
 - JSON Schema preview
 
-### Run
-- execute preset
-- inspect results
-- validate output
+**Run Tab**
+- Input editor
+- Run settings overrides
+- Results with JSON/Markdown export
+- Validation status
+- Run metrics
+
+**History Tab**
+- Previous runs for the preset
+- Run details dialog
 
 ### History
-- previous runs
-- run details
-- logs/errors
+- All runs across presets
+- Search/filter by preset, status
+- Run details
 
 ### Settings
-- providers
-- API keys
-- import/export
+- Provider management (add/edit/delete)
+- API key configuration
 
 ---
 
-# Tech Stack
+## Tech Stack
 
-## Backend
-- Python
+### Backend
+- Python 3.12+
 - FastAPI
 - SQLite
-- SQLAlchemy / SQLModel
-- Pydantic
+- SQLModel (SQLAlchemy + Pydantic)
 - OpenAI Python SDK
 
-## Frontend
-- React
+### Frontend
+- React 18
 - Vite
 - TypeScript
 - Tailwind CSS
-- shadcn/ui
+- shadcn/ui-inspired components
+- Lucide React icons
+- React Router DOM
+- Axios
+- React Hot Toast
 
 ---
 
-# Project Structure
+## Project Structure
 
 ```text
 ai-workbench/
@@ -163,6 +150,10 @@ ai-workbench/
 ├── backend/
 │   ├── app/
 │   │   ├── routers/
+│   │   │   ├── providers.py
+│   │   │   ├── presets.py
+│   │   │   └── runs.py
+│   │   ├── __init__.py
 │   │   ├── main.py
 │   │   ├── database.py
 │   │   ├── models.py
@@ -170,133 +161,175 @@ ai-workbench/
 │   │   ├── crud.py
 │   │   ├── llm.py
 │   │   └── seed.py
-│   │
 │   ├── requirements.txt
 │   └── .env.example
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── api/
+│   │   │   └── client.ts
 │   │   ├── components/
+│   │   │   ├── ui/
+│   │   │   │   ├── badge.tsx
+│   │   │   │   ├── button.tsx
+│   │   │   │   ├── card.tsx
+│   │   │   │   ├── dialog.tsx
+│   │   │   │   ├── dropdown-menu.tsx
+│   │   │   │   ├── input.tsx
+│   │   │   │   ├── label.tsx
+│   │   │   │   ├── scroll-area.tsx
+│   │   │   │   ├── select.tsx
+│   │   │   │   ├── separator.tsx
+│   │   │   │   ├── skeleton.tsx
+│   │   │   │   ├── switch.tsx
+│   │   │   │   ├── table.tsx
+│   │   │   │   ├── tabs.tsx
+│   │   │   │   ├── textarea.tsx
+│   │   │   │   └── tooltip.tsx
+│   │   │   ├── Layout.tsx
+│   │   │   └── Sidebar.tsx
 │   │   ├── pages/
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── PresetEditor.tsx
+│   │   │   ├── HistoryPage.tsx
+│   │   │   ├── RunDetails.tsx
+│   │   │   └── SettingsPage.tsx
 │   │   ├── routes/
+│   │   │   └── AppRoutes.tsx
 │   │   ├── types/
+│   │   │   └── index.ts
 │   │   ├── utils/
+│   │   │   ├── cn.ts
+│   │   │   └── helpers.ts
 │   │   ├── App.tsx
-│   │   └── main.tsx
-│   │
-│   └── package.json
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── index.html
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   └── postcss.config.js
 │
 └── README.md
 ```
 
 ---
 
-# Local Development
+## Local Development
 
-## Backend
+### Prerequisites
 
-### Install
+- Python 3.12+
+- Node.js 18+
+- An OpenAI API key (or another OpenAI-compatible API key)
+
+### Backend
 
 ```bash
 cd backend
 
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
+# Install dependencies
 pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env and add your API keys
 ```
 
-### Configure Environment
-
-Create `.env`:
-
+`.env` example:
 ```env
 OPENAI_API_KEY=your_key_here
 DATABASE_URL=sqlite:///./app.db
 ```
 
-### Run Backend
-
 ```bash
+# Run backend
 uvicorn app.main:app --reload
 ```
 
-Backend will run on:
+Backend will run on: `http://localhost:8000`
 
-```text
-http://localhost:8000
-```
+API documentation is available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
----
-
-## Frontend
-
-### Install
+### Frontend
 
 ```bash
 cd frontend
 
+# Install dependencies
 npm install
-```
 
-### Run Frontend
-
-```bash
+# Run frontend
 npm run dev
 ```
 
-Frontend will run on:
+Frontend will run on: `http://localhost:5173`
 
-```text
-http://localhost:5173
+The frontend is pre-configured to proxy API requests to `http://localhost:8000`.
+
+### Production Build
+
+```bash
+cd frontend
+npm run build
+```
+
+Production build output goes to `frontend/dist/`.
+
+---
+
+## API Overview
+
+### Providers
+```http
+GET    /api/providers/
+POST   /api/providers/
+PUT    /api/providers/{id}/
+DELETE /api/providers/{id}/
+```
+
+### Presets
+```http
+GET    /api/presets/
+POST   /api/presets/
+GET    /api/presets/{id}/
+PUT    /api/presets/{id}/
+DELETE /api/presets/{id}/
+POST   /api/presets/{id}/duplicate/
+```
+
+### Runs
+```http
+GET    /api/runs/
+GET    /api/runs/{id}/
+POST   /api/presets/{id}/run/
+DELETE /api/runs/{id}/
 ```
 
 ---
 
-# Example Provider Configurations
+## Example Workflow
 
-## OpenAI
+### 1. Create a Preset
 
-```text
-Base URL:
-https://api.openai.com/v1
-```
-
-## OpenRouter
-
-```text
-Base URL:
-https://openrouter.ai/api/v1
-```
-
-## Ollama
-
-```text
-Base URL:
-http://localhost:11434/v1
-```
-
----
-
-# Example Workflow
-
-## 1. Create Preset
-
-Example:
-- Bug Report Generator
+Example: Bug Report Generator
 
 Define:
-- prompts
-- model
-- schema fields
+- System prompt: "You are an expert at analyzing application logs..."
+- User prompt template: "Analyze the following logs and create a bug report:\n\n{{input}}"
+- Model: gpt-4o
 
----
-
-## 2. Add Schema
+### 2. Add a Schema
 
 Example fields:
-
 ```json
 {
   "title": "string",
@@ -307,96 +340,52 @@ Example fields:
 }
 ```
 
----
+### 3. Run the Preset
 
-## 3. Run Preset
-
-Paste:
-- logs
-- stack traces
-- requirements
-- notes
-
-AI Workbench:
-- renders prompt
-- calls model
-- validates output
-- saves run history
+Paste logs, stack traces, or notes into the input field and click **Run**. The app will:
+- Render the prompt template
+- Call the configured model
+- Validate the structured JSON output
+- Save the run to history
 
 ---
 
-# API Overview
+## Provider Configurations
 
-## Providers
-
-```http
-GET    /api/providers
-POST   /api/providers
-PUT    /api/providers/{id}
-DELETE /api/providers/{id}
+### OpenAI
+```text
+Base URL: https://api.openai.com/v1
+Model: gpt-4o
 ```
 
-## Presets
-
-```http
-GET    /api/presets
-POST   /api/presets
-GET    /api/presets/{id}
-PUT    /api/presets/{id}
-DELETE /api/presets/{id}
-POST   /api/presets/{id}/duplicate
+### OpenRouter
+```text
+Base URL: https://openrouter.ai/api/v1
+Model: openai/gpt-4o
 ```
 
-## Runs
-
-```http
-GET    /api/runs
-GET    /api/runs/{id}
-POST   /api/presets/{id}/run
-DELETE /api/runs/{id}
+### Ollama / Local Llama
+```text
+Base URL: http://localhost:11434/v1
+Model: llama3.1
 ```
 
 ---
 
-# Roadmap
-
-## Phase 1
-- preset CRUD
-- providers
-- schema builder
-- run execution
-- run history
-- structured validation
-
-## Phase 2
-- markdown export
-- import/export presets
-- attachments
-- streaming responses
-
-## Phase 3
-- preset versioning
-- batch runs
-- prompt templates
-- local model optimizations
-- workflow chaining
-
----
-
-# Design Philosophy
+## Design Philosophy
 
 AI Workbench is intentionally:
-- local-first
-- simple
-- fast to iterate on
-- easy to modify
-- schema-oriented
-- provider-agnostic
+- **Local-first** – your data stays on your machine
+- **Simple** – minimal moving parts, easy to understand
+- **Fast to iterate on** – change presets and re-run instantly
+- **Easy to modify** – clean code, no magic
+- **Schema-oriented** – structured outputs by default
+- **Provider-agnostic** – works with any OpenAI-compatible API
 
 The focus is practical AI workflows, not building a large SaaS platform.
 
 ---
 
-# License
+## License
 
 MIT

@@ -1,0 +1,87 @@
+import { format } from "date-fns";
+
+export function formatDate(date: string | Date): string {
+  return format(new Date(date), "MMM d, yyyy HH:mm");
+}
+
+export function formatDuration(ms?: number): string {
+  if (!ms) return "—";
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+export function truncate(str: string, maxLength: number = 100): string {
+  if (!str) return "";
+  if (str.length <= maxLength) return str;
+  return str.slice(0, maxLength) + "…";
+}
+
+export function parseTags(tags: string): string[] {
+  if (!tags) return [];
+  return tags
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+export function tagColor(tag: string): string {
+  const colors: Record<string, string> = {
+    bugs: "bg-blue-100 text-blue-700 border-blue-200",
+    bug: "bg-blue-100 text-blue-700 border-blue-200",
+    email: "bg-purple-100 text-purple-700 border-purple-200",
+    spec: "bg-orange-100 text-orange-700 border-orange-200",
+    docs: "bg-green-100 text-green-700 border-green-200",
+    feature: "bg-pink-100 text-pink-700 border-pink-200",
+    test: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    review: "bg-indigo-100 text-indigo-700 border-indigo-200",
+    data: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    support: "bg-teal-100 text-teal-700 border-teal-200",
+  };
+  const lower = tag.toLowerCase();
+  return (
+    colors[lower] || "bg-gray-100 text-gray-700 border-gray-200"
+  );
+}
+
+export function buildJsonSchema(fields: { name: string; type: string; required: boolean; description?: string; example?: string; default_value?: string }[]) {
+  const schema: Record<string, any> = {
+    type: "object",
+    properties: {},
+    required: [],
+  };
+  for (const f of fields) {
+    const prop: Record<string, any> = { type: f.type };
+    if (f.description) prop.description = f.description;
+    if (f.example) prop.example = f.example;
+    if (f.default_value) prop.default = f.default_value;
+    schema.properties[f.name] = prop;
+    if (f.required) schema.required.push(f.name);
+  }
+  return schema;
+}
+
+export function downloadJson(data: any, filename: string) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function downloadMarkdown(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function copyToClipboard(text: string): Promise<void> {
+  return navigator.clipboard.writeText(text);
+}
