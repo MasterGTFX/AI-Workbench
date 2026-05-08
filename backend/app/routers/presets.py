@@ -9,6 +9,67 @@ from app.models import Run
 router = APIRouter(prefix="/api/presets", tags=["presets"])
 
 
+@router.post("/generate/", response_model=schemas.PresetGenerateResponse)
+def generate_preset(
+    request: schemas.PresetGenerateRequest,
+    session: Session = Depends(get_session),
+):
+    provider = None
+    if request.provider_id:
+        provider = crud.get_provider(session, request.provider_id)
+    else:
+        # Use first active provider as default
+        providers = crud.get_providers(session)
+        for p in providers:
+            if p.active:
+                provider = p
+                break
+        if not provider and providers:
+            provider = providers[0]
+
+    if not provider:
+        raise HTTPException(status_code=400, detail="No provider configured. Add a provider first.")
+
+    try:
+        result = llm.generate_preset_draft(provider, request.prompt)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
+
+    # Validate and map schema field types
+    valid_types = {
+        "string", "number", "integer", "boolean", "enum",
+        "list[string]", "list[number]", "object", "list[object]",
+    }
+    schema_fields = []
+    for idx, f in enumerate(result.get("schema_fields", [])):
+        field_type = f.get("type", "string")
+        if field_type not in valid_types:
+            field_type = "string"
+        schema_fields.append(
+            schemas.SchemaFieldCreate(
+                name=f.get("name", f"field_{idx}"),
+                type=field_type,
+                required=f.get("required", True),
+                description=f.get("description") or None,
+                enum_values=f.get("enum_values") or None,
+                validation_hint=f.get("validation_hint") or None,
+                example=f.get("example") or None,
+                default_value=f.get("default_value") or None,
+                order=idx,
+            )
+        )
+
+    return schemas.PresetGenerateResponse(
+        name=result.get("name", "Generated Preset"),
+        description=result.get("description") or None,
+        tags=result.get("tags", ""),
+        system_prompt=result.get("system_prompt") or None,
+        user_prompt_template=result.get("user_prompt_template", "Analyze: {{input}}"),
+        model=result.get("model") or None,
+        schema_fields=schema_fields,
+    )
+
+
 @router.get("/", response_model=List[schemas.PresetResponse])
 def read_presets(session: Session = Depends(get_session)):
     return crud.get_presets(session)
@@ -68,10 +129,25 @@ def run_preset(
     if not db_preset:
         raise HTTPException(status_code=404, detail="Preset not found")
 
-    if not db_preset.provider_id:
-        raise HTTPException(status_code=400, detail="Preset has no provider configured")
+    # Resolve provider: run override > preset override > active provider
+    provider_id = None
+    if request.overrides and request.overrides.provider_id:
+        provider_id = request.overrides.provider_id
+    elif db_preset.provider_id:
+        provider_id = db_preset.provider_id
+    else:
+        providers = crud.get_providers(session)
+        for p in providers:
+            if p.active:
+                provider_id = p.id
+                break
+        if not provider_id and providers:
+            provider_id = providers[0].id
 
-    provider = crud.get_provider(session, db_preset.provider_id)
+    if not provider_id:
+        raise HTTPException(status_code=400, detail="No provider configured. Add a provider or select one for this run.")
+
+    provider = crud.get_provider(session, provider_id)
     if not provider:
         raise HTTPException(status_code=400, detail="Provider not found")
 

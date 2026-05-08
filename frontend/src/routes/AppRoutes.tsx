@@ -11,7 +11,6 @@ export default function AppRoutes() {
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/presets/:id" element={<PresetEditor />} />
-        <Route path="/presets/new" element={<PresetEditor />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>

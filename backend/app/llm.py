@@ -4,8 +4,30 @@ import os
 import re
 from typing import List, Optional
 from openai import OpenAI
+from pydantic import BaseModel
 
 from app.models import SchemaField, Preset, Provider
+
+
+class _GeneratedSchemaField(BaseModel):
+    name: str
+    type: str
+    required: bool = True
+    description: str = ""
+    enum_values: Optional[str] = None
+    validation_hint: Optional[str] = None
+    example: Optional[str] = None
+    default_value: Optional[str] = None
+
+
+class _GeneratedPreset(BaseModel):
+    name: str
+    description: str
+    tags: str
+    system_prompt: str
+    user_prompt_template: str
+    model: Optional[str] = None
+    schema_fields: List[_GeneratedSchemaField]
 
 
 def build_json_schema(fields: List[SchemaField]) -> dict:
@@ -69,6 +91,64 @@ def validate_output(output: dict, fields: List[SchemaField]) -> List[str]:
         if field.required and field.name not in output:
             errors.append(f"Required field '{field.name}' is missing")
     return errors
+
+
+def generate_preset_draft(provider: Provider, prompt: str) -> dict:
+    api_key = provider.api_key or os.environ.get("OPENAI_API_KEY", "")
+    client = OpenAI(base_url=provider.base_url, api_key=api_key)
+    model = provider.default_model or ""
+
+    schema = _GeneratedPreset.model_json_schema()
+    schema_json = json.dumps(schema, indent=2)
+
+    system_prompt = (
+        "You are an expert prompt engineer. Your task is to create a complete AI preset "
+        "based on the user's description. A preset consists of: name, description, tags, "
+        "system prompt, user prompt template (must include {{input}}), optional model, "
+        "and a list of schema fields that define the structured JSON output.\n\n"
+        "Rules:\n"
+        "- The user_prompt_template MUST reference user input using {{input}}.\n"
+        "- schema_fields define the output JSON structure. Choose appropriate types.\n"
+        "- Supported field types: string, number, integer, boolean, enum, list[string], list[number], object, list[object].\n"
+        "- For enum fields, provide comma-separated values in enum_values.\n"
+        "- Make the preset practical and immediately usable.\n\n"
+        "Respond with a valid JSON object matching this schema:\n"
+        f"{schema_json}\n"
+        "Do not include any other text, only the JSON object."
+    )
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"Create a preset for: {prompt}"},
+    ]
+
+    kwargs: dict = {"model": model, "messages": messages}
+
+    try:
+        response = client.chat.completions.create(
+            **kwargs,
+            response_format={"type": "json_object"},
+        )
+    except Exception:
+        response = client.chat.completions.create(**kwargs)
+
+    raw_content = response.choices[0].message.content or "{}"
+
+    try:
+        parsed = json.loads(raw_content)
+    except json.JSONDecodeError:
+        match = re.search(r"```(?:json)?\s*(.*?)```", raw_content, re.DOTALL)
+        if match:
+            try:
+                parsed = json.loads(match.group(1).strip())
+            except json.JSONDecodeError:
+                raise ValueError(f"Failed to parse JSON response: {raw_content[:500]}")
+        else:
+            raise ValueError(f"Failed to parse JSON response: {raw_content[:500]}")
+
+    # Validate against our model
+    validated = _GeneratedPreset.model_validate(parsed)
+    return validated.model_dump()
 
 
 def call_llm(

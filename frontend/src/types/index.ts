@@ -63,3 +63,18 @@ export interface Run {
   error?: string;
   created_at: string;
 }
+
+export interface PresetGenerateRequest {
+  prompt: string;
+  provider_id?: number;
+}
+
+export interface PresetGenerateResponse {
+  name: string;
+  description?: string;
+  tags: string;
+  system_prompt?: string;
+  user_prompt_template: string;
+  model?: string;
+  schema_fields: SchemaField[];
+}

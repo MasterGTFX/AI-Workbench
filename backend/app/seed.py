@@ -18,14 +18,11 @@ def seed_data():
             session.add(p)
         session.commit()
 
-        openai = session.exec(select(Provider).where(Provider.name == "OpenAI")).first()
-
         presets_data = [
             {
                 "name": "Bug Report Generator",
                 "description": "Extract structured bug report from logs",
                 "tags": "bugs",
-                "provider_id": openai.id,
                 "model": "gpt-4o",
                 "system_prompt": "You are an expert at analyzing application logs and creating structured bug reports. Extract all relevant information and return it in the specified JSON format.",
                 "user_prompt_template": "Analyze the following logs and create a bug report:\n\n{{input}}",
@@ -45,7 +42,6 @@ def seed_data():
                 "name": "Business Email Generator",
                 "description": "Generate professional emails",
                 "tags": "email",
-                "provider_id": openai.id,
                 "model": "gpt-4o",
                 "system_prompt": "You are a professional business communication assistant. Generate polished business emails based on the provided context.",
                 "user_prompt_template": "Write a business email about:\n\n{{input}}",
@@ -63,7 +59,6 @@ def seed_data():
                 "name": "Feature Spec Generator",
                 "description": "Create feature specifications",
                 "tags": "spec",
-                "provider_id": openai.id,
                 "model": "gpt-4o",
                 "system_prompt": "You are a product manager assistant. Create detailed feature specifications from brief descriptions.",
                 "user_prompt_template": "Create a feature spec for:\n\n{{input}}",
@@ -81,7 +76,6 @@ def seed_data():
                 "name": "DB Import Mapper",
                 "description": "Map CSV data to database schema",
                 "tags": "data",
-                "provider_id": openai.id,
                 "model": "gpt-4o",
                 "system_prompt": "You are a database specialist. Map CSV columns to database table schemas and suggest transformations.",
                 "user_prompt_template": "Map the following CSV data to a database schema:\n\n{{input}}",
@@ -98,7 +92,6 @@ def seed_data():
                 "name": "Support Ticket Classifier",
                 "description": "Classify and summarize tickets",
                 "tags": "support",
-                "provider_id": openai.id,
                 "model": "gpt-4o",
                 "system_prompt": "You are a customer support analyst. Classify support tickets and provide structured summaries.",
                 "user_prompt_template": "Classify and summarize this support ticket:\n\n{{input}}",

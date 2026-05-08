@@ -19,6 +19,8 @@ import {
   Layers,
   ChevronDown,
   Eye,
+  Sparkles,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +100,7 @@ export default function PresetEditor() {
   const [running, setRunning] = useState(false);
   const [runSystemPrompt, setRunSystemPrompt] = useState("");
   const [runUserPromptTemplate, setRunUserPromptTemplate] = useState("");
+  const [runProviderId, setRunProviderId] = useState("");
 
   // History tab state
   const [runs, setRuns] = useState<Run[]>([]);
@@ -107,6 +110,12 @@ export default function PresetEditor() {
   // Quick test state
   const [testInput, setTestInput] = useState("");
   const [testRunning, setTestRunning] = useState(false);
+
+  // AI generation state
+  const [aiMode, setAiMode] = useState(isNew);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiProviderId, setAiProviderId] = useState<string>("");
 
   function renderResultValue(value: unknown) {
     if (value === null) return <span className="text-slate-400">null</span>;
@@ -144,7 +153,8 @@ export default function PresetEditor() {
   useEffect(() => {
     setRunSystemPrompt(preset.system_prompt || "");
     setRunUserPromptTemplate(preset.user_prompt_template || "");
-  }, [preset.system_prompt, preset.user_prompt_template]);
+    setRunProviderId("");
+  }, [preset.system_prompt, preset.user_prompt_template, preset.provider_id]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -224,6 +234,46 @@ export default function PresetEditor() {
       toast.error("Failed to save preset");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleGenerate() {
+    if (!aiPrompt.trim()) {
+      toast.error("Describe what you want the preset to do");
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const res = await apiClient.post("/presets/generate/", {
+        prompt: aiPrompt,
+        provider_id: aiProviderId ? Number(aiProviderId) : undefined,
+      });
+      const data = res.data as {
+        name: string;
+        description?: string;
+        tags: string;
+        system_prompt?: string;
+        user_prompt_template: string;
+        model?: string;
+        schema_fields: SchemaField[];
+      };
+      setPreset({
+        ...EMPTY_PRESET,
+        name: data.name,
+        description: data.description,
+        tags: data.tags,
+        system_prompt: data.system_prompt,
+        user_prompt_template: data.user_prompt_template,
+        model: data.model,
+        schema_fields: data.schema_fields.map((f, i) => ({ ...f, order: i })),
+        provider_id: aiProviderId ? Number(aiProviderId) : undefined,
+      });
+      setAiMode(false);
+      toast.success("Preset generated! Review and save.");
+    } catch {
+      toast.error("Failed to generate preset");
+    } finally {
+      setAiGenerating(false);
     }
   }
 
@@ -308,6 +358,9 @@ export default function PresetEditor() {
     setRunning(true);
     try {
       const overrides: Record<string, any> = {};
+      if (runProviderId) {
+        overrides.provider_id = Number(runProviderId);
+      }
       if (runSystemPrompt.trim() !== "" && runSystemPrompt !== (preset.system_prompt || "")) {
         overrides.system_prompt = runSystemPrompt;
       }
@@ -385,6 +438,28 @@ export default function PresetEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isNew && (
+            <div className="flex items-center rounded-md border bg-slate-50 p-0.5">
+              <Button
+                variant={aiMode ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setAiMode(true)}
+                className={`gap-1.5 ${aiMode ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                AI Mode
+              </Button>
+              <Button
+                variant={!aiMode ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setAiMode(false)}
+                className={`gap-1.5 ${!aiMode ? "bg-slate-700 hover:bg-slate-800" : ""}`}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Manual
+              </Button>
+            </div>
+          )}
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList>
               <TabsTrigger value="configure">Configure</TabsTrigger>
@@ -404,21 +479,38 @@ export default function PresetEditor() {
       </div>
 
       <div className="flex-1 overflow-auto p-6">
-        {activeTab === "configure" && (
+        {activeTab === "configure" && isNew && aiMode && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
-              {/* Model / Provider */}
-              <div className="rounded-lg border p-5">
-                <h3 className="mb-4 text-sm font-semibold text-slate-900">Model / Provider</h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="lg:col-span-3 flex flex-col items-center justify-start pt-12">
+              <div className="w-full max-w-2xl space-y-6">
+                <div className="text-center space-y-2">
+                  <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
+                    <Wand2 className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-slate-900">AI Preset Generator</h2>
+                  <p className="text-sm text-slate-500">
+                    Describe what you want and AI will generate the preset for you.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-5 space-y-4">
                   <div>
-                    <Label className="mb-1 block">Provider</Label>
+                    <Label className="mb-1 block">What do you want this preset to do?</Label>
+                    <Textarea
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="e.g. Generate an App Store listing with title, subtitle, description, and keywords from app details"
+                      rows={6}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Provider (optional)</Label>
                     <Select
-                      value={preset.provider_id ? String(preset.provider_id) : ""}
-                      onValueChange={handleProviderChange}
-                      placeholder="Select provider"
+                      value={aiProviderId}
+                      onValueChange={setAiProviderId}
+                      placeholder="Auto-select active provider"
                     >
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="">Auto-select</SelectItem>
                       {providers.map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>
                           {p.name}
@@ -426,10 +518,59 @@ export default function PresetEditor() {
                       ))}
                     </Select>
                   </div>
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={aiGenerating}
+                    className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
+                    {aiGenerating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-4 w-4" />
+                    )}
+                    Generate Preset
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "configure" && (!isNew || !aiMode) && (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Model / Provider */}
+              <div className="rounded-lg border p-5">
+                <h3 className="mb-4 text-sm font-semibold text-slate-900">Model / Provider</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label className="mb-1 block">Provider Override</Label>
+                    <Select
+                      value={preset.provider_id ? String(preset.provider_id) : ""}
+                      onValueChange={handleProviderChange}
+                      placeholder="Use current active provider"
+                    >
+                      <SelectItem value="">Use current active provider</SelectItem>
+                      {providers.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                    {!preset.provider_id && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        This preset will use whichever provider is currently active at runtime.
+                      </p>
+                    )}
+                  </div>
                   <div>
                     <Label className="mb-1 block">Base URL</Label>
                     <Input
-                      value={providers.find((p) => p.id === preset.provider_id)?.base_url || ""}
+                      value={
+                        providers.find((p) => p.id === preset.provider_id)?.base_url ||
+                        providers.find((p) => p.active)?.base_url ||
+                        ""
+                      }
                       disabled
                       placeholder="https://api.openai.com/v1"
                     />
@@ -781,6 +922,28 @@ export default function PresetEditor() {
               <div className="rounded-lg border p-5">
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">Run Settings</h3>
                 <div className="space-y-3">
+                  <div>
+                    <Label className="mb-1 block text-xs">Provider</Label>
+                    <Select
+                      value={runProviderId}
+                      onValueChange={setRunProviderId}
+                      placeholder="Use preset default"
+                    >
+                      <SelectItem value="">Use preset default</SelectItem>
+                      {providers.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.name} {p.active ? "(active)" : ""}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {runProviderId
+                        ? `Overriding to: ${providers.find((p) => String(p.id) === runProviderId)?.name || "Unknown"}`
+                        : preset.provider_id
+                        ? `Using preset override: ${providers.find((p) => p.id === preset.provider_id)?.name || "Unknown"}`
+                        : `Using current active provider: ${providers.find((p) => p.active)?.name || "None"}`}
+                    </p>
+                  </div>
                   <div>
                     <Label className="mb-1 block text-xs">System Prompt</Label>
                     <Textarea

@@ -137,6 +137,22 @@ class RunOverrides(BaseModel):
     model: Optional[str] = None
     system_prompt: Optional[str] = None
     user_prompt_template: Optional[str] = None
+    provider_id: Optional[int] = None
+
+
+class PresetGenerateRequest(BaseModel):
+    prompt: str
+    provider_id: Optional[int] = None
+
+
+class PresetGenerateResponse(BaseModel):
+    name: str
+    description: Optional[str] = None
+    tags: str = ""
+    system_prompt: Optional[str] = None
+    user_prompt_template: str
+    model: Optional[str] = None
+    schema_fields: List[SchemaFieldCreate] = []
 
 
 class RunExecuteRequest(BaseModel):
