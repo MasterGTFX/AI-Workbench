@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,9 +18,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI Workbench API", lifespan=lifespan)
 
+_allow_origins = os.environ.get("ALLOW_ORIGINS", "http://localhost:5173")
+allow_origins = [o.strip() for o in _allow_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
