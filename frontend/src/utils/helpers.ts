@@ -43,14 +43,22 @@ export function tagColor(tag: string): string {
   );
 }
 
-export function buildJsonSchema(fields: { name: string; type: string; required: boolean; description?: string; example?: string; default_value?: string }[]) {
+export function buildJsonSchema(fields: { name: string; type: string; required: boolean; description?: string; example?: string; default_value?: string; enum_values?: string }[]) {
   const schema: Record<string, any> = {
     type: "object",
     properties: {},
     required: [],
   };
   for (const f of fields) {
-    const prop: Record<string, any> = { type: f.type };
+    const prop: Record<string, any> = {};
+    if (f.type === "enum") {
+      prop.type = "string";
+      if (f.enum_values) {
+        prop.enum = f.enum_values.split(",").map((v) => v.trim()).filter(Boolean);
+      }
+    } else {
+      prop.type = f.type;
+    }
     if (f.description) prop.description = f.description;
     if (f.example) prop.example = f.example;
     if (f.default_value) prop.default = f.default_value;

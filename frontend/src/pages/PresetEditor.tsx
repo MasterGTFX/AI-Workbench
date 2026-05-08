@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Save,
@@ -28,15 +28,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectItem } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { apiClient } from "@/api/client";
+import RunDetails from "@/pages/RunDetails";
 import { Preset, Provider, SchemaField, Run } from "@/types";
 import {
   formatDate,
@@ -77,14 +70,8 @@ const EMPTY_PRESET: Partial<Preset> = {
   description: "",
   tags: "",
   provider_id: undefined,
-  model: "gpt-4o",
   system_prompt: "",
   user_prompt_template: "",
-  temperature: 0.7,
-  max_tokens: 2000,
-  top_p: 1.0,
-  frequency_penalty: 0.0,
-  presence_penalty: 0.0,
   stream: false,
   schema_fields: [],
 };
@@ -93,6 +80,7 @@ export default function PresetEditor() {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isNew = id === "new";
   const presetId = isNew ? null : Number(id);
 
@@ -108,7 +96,8 @@ export default function PresetEditor() {
   const [runInput, setRunInput] = useState("");
   const [runResult, setRunResult] = useState<Run | null>(null);
   const [running, setRunning] = useState(false);
-  const [runOverrides, setRunOverrides] = useState({ temperature: "", max_tokens: "", top_p: "" });
+  const [runSystemPrompt, setRunSystemPrompt] = useState("");
+  const [runUserPromptTemplate, setRunUserPromptTemplate] = useState("");
 
   // History tab state
   const [runs, setRuns] = useState<Run[]>([]);
@@ -118,6 +107,29 @@ export default function PresetEditor() {
   // Quick test state
   const [testInput, setTestInput] = useState("");
   const [testRunning, setTestRunning] = useState(false);
+
+  function renderResultValue(value: unknown) {
+    if (value === null) return <span className="text-slate-400">null</span>;
+    if (typeof value === "boolean")
+      return <span className="text-blue-600 font-medium">{String(value)}</span>;
+    if (typeof value === "number")
+      return <span className="text-emerald-600 font-medium">{value}</span>;
+    if (typeof value === "string")
+      return <span className="text-slate-800">{value}</span>;
+    return (
+      <pre className="whitespace-pre-wrap text-sm text-slate-700">
+        {JSON.stringify(value, null, 2)}
+      </pre>
+    );
+  }
+
+  function getResultValueText(value: unknown): string {
+    if (value === null) return "null";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
+    return JSON.stringify(value, null, 2);
+  }
 
   useEffect(() => {
     fetchProviders();
@@ -130,9 +142,25 @@ export default function PresetEditor() {
   }, [presetId]);
 
   useEffect(() => {
+    setRunSystemPrompt(preset.system_prompt || "");
+    setRunUserPromptTemplate(preset.user_prompt_template || "");
+  }, [preset.system_prompt, preset.user_prompt_template]);
+
+  useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab) setActiveTab(tab);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (location.state && typeof location.state === "object" && "run" in location.state) {
+      const run = location.state.run as Run;
+      setRunInput(run.input);
+      setRunResult(run);
+      handleTabChange("run");
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   async function fetchProviders() {
     try {
@@ -205,11 +233,7 @@ export default function PresetEditor() {
 
   function handleProviderChange(providerId: string) {
     const pid = providerId ? Number(providerId) : undefined;
-    const provider = providers.find((p) => p.id === pid);
-    updatePreset({
-      provider_id: pid,
-      model: provider?.default_model || preset.model,
-    });
+    updatePreset({ provider_id: pid });
   }
 
   // Schema field management
@@ -284,9 +308,12 @@ export default function PresetEditor() {
     setRunning(true);
     try {
       const overrides: Record<string, any> = {};
-      if (runOverrides.temperature !== "") overrides.temperature = Number(runOverrides.temperature);
-      if (runOverrides.max_tokens !== "") overrides.max_tokens = Number(runOverrides.max_tokens);
-      if (runOverrides.top_p !== "") overrides.top_p = Number(runOverrides.top_p);
+      if (runSystemPrompt.trim() !== "" && runSystemPrompt !== (preset.system_prompt || "")) {
+        overrides.system_prompt = runSystemPrompt;
+      }
+      if (runUserPromptTemplate.trim() !== "" && runUserPromptTemplate !== (preset.user_prompt_template || "")) {
+        overrides.user_prompt_template = runUserPromptTemplate;
+      }
       const res = await apiClient.post<Run>(`/presets/${presetId}/run`, {
         input: runInput,
         overrides: Object.keys(overrides).length ? overrides : undefined,
@@ -411,9 +438,18 @@ export default function PresetEditor() {
                     <Label className="mb-1 block">Model</Label>
                     <Input
                       value={preset.model || ""}
-                      onChange={(e) => updatePreset({ model: e.target.value })}
-                      placeholder="gpt-4o"
+                      onChange={(e) =>
+                        updatePreset({
+                          model: e.target.value || undefined,
+                        })
+                      }
+                      placeholder="Leave empty to use active provider model"
                     />
+                    {!preset.model && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Will use the active provider’s default model at runtime.
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label className="mb-1 block">Tags</Label>
@@ -471,16 +507,22 @@ export default function PresetEditor() {
                     <Input
                       type="number"
                       step="0.1"
-                      value={preset.temperature ?? 0.7}
-                      onChange={(e) => updatePreset({ temperature: Number(e.target.value) })}
+                      value={preset.temperature ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updatePreset({ temperature: val === "" ? null : Number(val) });
+                      }}
                     />
                   </div>
                   <div>
                     <Label className="mb-1 block">Max Tokens</Label>
                     <Input
                       type="number"
-                      value={preset.max_tokens ?? 2000}
-                      onChange={(e) => updatePreset({ max_tokens: Number(e.target.value) })}
+                      value={preset.max_tokens ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updatePreset({ max_tokens: val === "" ? null : Number(val) });
+                      }}
                     />
                   </div>
                   <div>
@@ -488,8 +530,11 @@ export default function PresetEditor() {
                     <Input
                       type="number"
                       step="0.1"
-                      value={preset.top_p ?? 1.0}
-                      onChange={(e) => updatePreset({ top_p: Number(e.target.value) })}
+                      value={preset.top_p ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updatePreset({ top_p: val === "" ? null : Number(val) });
+                      }}
                     />
                   </div>
                   <div>
@@ -497,8 +542,11 @@ export default function PresetEditor() {
                     <Input
                       type="number"
                       step="0.1"
-                      value={preset.frequency_penalty ?? 0.0}
-                      onChange={(e) => updatePreset({ frequency_penalty: Number(e.target.value) })}
+                      value={preset.frequency_penalty ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updatePreset({ frequency_penalty: val === "" ? null : Number(val) });
+                      }}
                     />
                   </div>
                   <div>
@@ -506,8 +554,11 @@ export default function PresetEditor() {
                     <Input
                       type="number"
                       step="0.1"
-                      value={preset.presence_penalty ?? 0.0}
-                      onChange={(e) => updatePreset({ presence_penalty: Number(e.target.value) })}
+                      value={preset.presence_penalty ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updatePreset({ presence_penalty: val === "" ? null : Number(val) });
+                      }}
                     />
                   </div>
                   <div className="flex items-end gap-3">
@@ -729,35 +780,27 @@ export default function PresetEditor() {
 
               <div className="rounded-lg border p-5">
                 <h3 className="mb-3 text-sm font-semibold text-slate-900">Run Settings</h3>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-3">
                   <div>
-                    <Label className="mb-1 block text-xs">Temperature</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={runOverrides.temperature}
-                      onChange={(e) => setRunOverrides({ ...runOverrides, temperature: e.target.value })}
-                      placeholder={String(preset.temperature ?? 0.7)}
+                    <Label className="mb-1 block text-xs">System Prompt</Label>
+                    <Textarea
+                      value={runSystemPrompt}
+                      onChange={(e) => setRunSystemPrompt(e.target.value)}
+                      placeholder={preset.system_prompt || "You are a helpful assistant..."}
+                      rows={4}
                     />
                   </div>
                   <div>
-                    <Label className="mb-1 block text-xs">Max Tokens</Label>
-                    <Input
-                      type="number"
-                      value={runOverrides.max_tokens}
-                      onChange={(e) => setRunOverrides({ ...runOverrides, max_tokens: e.target.value })}
-                      placeholder={String(preset.max_tokens ?? 2000)}
+                    <Label className="mb-1 block text-xs">User Prompt Template</Label>
+                    <Textarea
+                      value={runUserPromptTemplate}
+                      onChange={(e) => setRunUserPromptTemplate(e.target.value)}
+                      placeholder={preset.user_prompt_template || "Analyze the following: {{input}}"}
+                      rows={4}
                     />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Top P</Label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={runOverrides.top_p}
-                      onChange={(e) => setRunOverrides({ ...runOverrides, top_p: e.target.value })}
-                      placeholder={String(preset.top_p ?? 1.0)}
-                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Use {"{{input}}"} to insert the user input at runtime.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -790,17 +833,102 @@ export default function PresetEditor() {
                         <TabsTrigger value="raw">Raw JSON</TabsTrigger>
                       </TabsList>
                       <TabsContent value="result">
-                        <div className="rounded-md border bg-slate-50 p-4">
-                          <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                        {runResult.output ? (
+                          <div className="space-y-3">
                             {(() => {
                               try {
-                                return JSON.stringify(JSON.parse(runResult.output || "{}"), null, 2);
+                                const parsed = JSON.parse(runResult.output);
+                                if (
+                                  typeof parsed !== "object" ||
+                                  parsed === null ||
+                                  Array.isArray(parsed)
+                                ) {
+                                  return (
+                                    <div className="rounded-md border bg-slate-50 p-4">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                          Value
+                                        </span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-7 gap-1 text-slate-500"
+                                          onClick={() =>
+                                            copyToClipboard(runResult.output).then(() =>
+                                              toast.success("Copied")
+                                            )
+                                          }
+                                        >
+                                          <Copy className="h-3.5 w-3.5" />
+                                          Copy
+                                        </Button>
+                                      </div>
+                                      <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                        {JSON.stringify(parsed, null, 2)}
+                                      </pre>
+                                    </div>
+                                  );
+                                }
+                                return Object.entries(parsed).map(([key, value]) => (
+                                  <div
+                                    key={key}
+                                    className="rounded-md border bg-white p-4 shadow-sm"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                        {key}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 gap-1 text-slate-500"
+                                        onClick={() =>
+                                          copyToClipboard(
+                                            getResultValueText(value)
+                                          ).then(() => toast.success(`Copied ${key}`))
+                                        }
+                                      >
+                                        <Copy className="h-3.5 w-3.5" />
+                                        Copy
+                                      </Button>
+                                    </div>
+                                    <div className="text-sm">
+                                      {renderResultValue(value)}
+                                    </div>
+                                  </div>
+                                ));
                               } catch {
-                                return runResult.output || "No output";
+                                return (
+                                  <div className="rounded-md border bg-slate-50 p-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                        Value
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 gap-1 text-slate-500"
+                                        onClick={() =>
+                                          copyToClipboard(runResult.output).then(() =>
+                                            toast.success("Copied")
+                                          )
+                                        }
+                                      >
+                                        <Copy className="h-3.5 w-3.5" />
+                                        Copy
+                                      </Button>
+                                    </div>
+                                    <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                      {runResult.output}
+                                    </pre>
+                                  </div>
+                                );
                               }
                             })()}
-                          </pre>
-                        </div>
+                          </div>
+                        ) : (
+                          <div className="text-slate-500">No output available.</div>
+                        )}
                       </TabsContent>
                       <TabsContent value="raw">
                         <div className="rounded-md border bg-slate-50 p-4">
@@ -849,6 +977,14 @@ export default function PresetEditor() {
                         onClick={() => downloadMarkdown("```json\n" + (runResult.output || "") + "\n```", `result-${runResult.id}.md`)}
                       >
                         <FileText className="h-3 w-3" /> Download Markdown
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => setViewRunId(runResult.id)}
+                      >
+                        <Eye className="h-3 w-3" /> View Details
                       </Button>
                     </div>
 
@@ -926,7 +1062,7 @@ export default function PresetEditor() {
                   </thead>
                   <tbody>
                     {runs.map((run) => (
-                      <tr key={run.id} className="border-b hover:bg-slate-50">
+                      <tr key={run.id} className="border-b hover:bg-slate-50 cursor-pointer" onClick={() => setViewRunId(run.id)}>
                         <td className="px-4 py-3 whitespace-nowrap text-slate-600">
                           {formatDate(run.created_at)}
                         </td>
@@ -948,7 +1084,7 @@ export default function PresetEditor() {
                             <Button size="icon" variant="ghost" onClick={() => setViewRunId(run.id)}>
                               <Eye className="h-4 w-4 text-blue-600" />
                             </Button>
-                            <Button size="icon" variant="ghost" onClick={() => handleDeleteRun(run.id)}>
+                            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); handleDeleteRun(run.id); }}>
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
@@ -963,52 +1099,19 @@ export default function PresetEditor() {
         )}
       </div>
 
-      {/* Run Details Dialog */}
+      {/* Run Details Drawer */}
       {viewRunId && (
-        <Dialog open={true} onOpenChange={() => setViewRunId(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle>Run Details</DialogTitle>
-              <DialogDescription>View run details and output</DialogDescription>
-            </DialogHeader>
-            {(() => {
-              const run = runs.find((r) => r.id === viewRunId);
-              if (!run) return <div>Run not found</div>;
-              return (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-slate-500">Date:</span> {formatDate(run.created_at)}</div>
-                    <div><span className="text-slate-500">Model:</span> {run.model}</div>
-                    <div><span className="text-slate-500">Status:</span> <Badge variant={run.status === "success" ? "success" : "error"}>{run.status}</Badge></div>
-                    <div><span className="text-slate-500">Duration:</span> {formatDuration(run.duration_ms)}</div>
-                    <div><span className="text-slate-500">Tokens:</span> {(run.tokens_prompt || 0) + (run.tokens_completion || 0)}</div>
-                  </div>
-                  <div>
-                    <div className="mb-1 text-xs font-semibold text-slate-500">Input</div>
-                    <pre className="rounded-md border bg-slate-50 p-3 text-sm whitespace-pre-wrap">{run.input}</pre>
-                  </div>
-                  <div>
-                    <div className="mb-1 text-xs font-semibold text-slate-500">Output</div>
-                    <pre className="rounded-md border bg-slate-50 p-3 text-sm whitespace-pre-wrap">
-                      {(() => {
-                        try { return JSON.stringify(JSON.parse(run.output || "{}"), null, 2); }
-                        catch { return run.output || "No output"; }
-                      })()}
-                    </pre>
-                  </div>
-                  {run.error && (
-                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-                      {run.error}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setViewRunId(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <RunDetails
+          runId={viewRunId}
+          open={true}
+          onClose={() => setViewRunId(null)}
+          onRunAgain={(run) => {
+            setRunInput(run.input);
+            setRunResult(run);
+            handleTabChange("run");
+            setViewRunId(null);
+          }}
+        />
       )}
     </div>
   );

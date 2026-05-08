@@ -9,6 +9,10 @@ export interface Provider {
   updated_at: string;
 }
 
+export interface ModelItem {
+  id: string;
+}
+
 export interface SchemaField {
   id?: number;
   preset_id?: number;
@@ -30,14 +34,14 @@ export interface Preset {
   tags: string;
   provider_id?: number;
   provider?: Provider;
-  model: string;
+  model?: string;
   system_prompt?: string;
   user_prompt_template: string;
-  temperature: number;
-  max_tokens: number;
-  top_p: number;
-  frequency_penalty: number;
-  presence_penalty: number;
+  temperature?: number | null;
+  max_tokens?: number | null;
+  top_p?: number | null;
+  frequency_penalty?: number | null;
+  presence_penalty?: number | null;
   stream: boolean;
   schema_fields: SchemaField[];
   created_at: string;

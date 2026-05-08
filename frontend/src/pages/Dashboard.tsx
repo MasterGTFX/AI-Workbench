@@ -88,7 +88,7 @@ export default function Dashboard() {
         (p) =>
           p.name.toLowerCase().includes(q) ||
           (p.description && p.description.toLowerCase().includes(q)) ||
-          p.model.toLowerCase().includes(q)
+          (p.model || "").toLowerCase().includes(q)
       );
     }
     if (tagFilter) {
@@ -256,7 +256,9 @@ export default function Dashboard() {
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-600">
-                    {preset.model}
+                    {preset.model || (
+                      <span className="text-slate-400 italic">Active model</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {formatDate(preset.updated_at)}
@@ -385,7 +387,7 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>{preset.model}</span>
+                <span>{preset.model || "Active model"}</span>
                 <span>{formatDate(preset.updated_at)}</span>
               </div>
             </div>

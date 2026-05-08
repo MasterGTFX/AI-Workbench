@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Trash2,
@@ -46,7 +46,7 @@ export default function HistoryPage() {
   const [page, setPage] = useState(1);
   const [viewRunId, setViewRunId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRuns();
@@ -294,6 +294,9 @@ export default function HistoryPage() {
           runId={viewRunId}
           open={true}
           onClose={() => setViewRunId(null)}
+          onRunAgain={(run) => {
+            navigate(`/presets/${run.preset_id}?tab=run`, { state: { run } });
+          }}
         />
       )}
     </div>

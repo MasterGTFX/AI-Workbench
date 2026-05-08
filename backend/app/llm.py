@@ -86,17 +86,15 @@ def call_llm(
         api_key=api_key,
     )
 
-    model = overrides.get("model", preset.model)
-    temperature = overrides.get("temperature", preset.temperature)
-    max_tokens = overrides.get("max_tokens", preset.max_tokens)
-    top_p = overrides.get("top_p", preset.top_p)
+    model = overrides.get("model", preset.model or provider.default_model)
 
-    user_prompt = render_prompt(preset.user_prompt_template, input_text)
+    user_prompt_template = overrides.get("user_prompt_template", preset.user_prompt_template)
+    user_prompt = render_prompt(user_prompt_template, input_text)
 
     schema = build_json_schema(schema_fields)
     schema_json = json.dumps(schema, indent=2)
 
-    system_prompt = preset.system_prompt or ""
+    system_prompt = overrides.get("system_prompt", preset.system_prompt) or ""
     system_prompt += (
         f"\n\nYou must respond with a valid JSON object matching this schema:\n"
         f"{schema_json}\n"
@@ -108,15 +106,28 @@ def call_llm(
         {"role": "user", "content": user_prompt},
     ]
 
-    kwargs = {
+    kwargs: dict = {
         "model": model,
         "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "top_p": top_p,
-        "frequency_penalty": preset.frequency_penalty,
-        "presence_penalty": preset.presence_penalty,
     }
+
+    if preset.frequency_penalty is not None:
+        kwargs["frequency_penalty"] = preset.frequency_penalty
+    if preset.presence_penalty is not None:
+        kwargs["presence_penalty"] = preset.presence_penalty
+    if preset.temperature is not None:
+        kwargs["temperature"] = preset.temperature
+    if preset.max_tokens is not None:
+        kwargs["max_tokens"] = preset.max_tokens
+    if preset.top_p is not None:
+        kwargs["top_p"] = preset.top_p
+
+    if "temperature" in overrides:
+        kwargs["temperature"] = overrides["temperature"]
+    if "max_tokens" in overrides:
+        kwargs["max_tokens"] = overrides["max_tokens"]
+    if "top_p" in overrides:
+        kwargs["top_p"] = overrides["top_p"]
 
     start_time = time.time()
 

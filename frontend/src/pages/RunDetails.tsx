@@ -28,11 +28,35 @@ interface RunDetailsProps {
   runId: number;
   open: boolean;
   onClose: () => void;
+  onRunAgain?: (run: Run) => void;
 }
 
-export default function RunDetails({ runId, open, onClose }: RunDetailsProps) {
+export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDetailsProps) {
   const [run, setRun] = useState<Run | null>(null);
   const [loading, setLoading] = useState(true);
+
+  function renderResultValue(value: unknown) {
+    if (value === null) return <span className="text-slate-400">null</span>;
+    if (typeof value === "boolean")
+      return <span className="text-blue-600 font-medium">{String(value)}</span>;
+    if (typeof value === "number")
+      return <span className="text-emerald-600 font-medium">{value}</span>;
+    if (typeof value === "string")
+      return <span className="text-slate-800">{value}</span>;
+    return (
+      <pre className="whitespace-pre-wrap text-sm text-slate-700">
+        {JSON.stringify(value, null, 2)}
+      </pre>
+    );
+  }
+
+  function getResultValueText(value: unknown): string {
+    if (value === null) return "null";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
+    return JSON.stringify(value, null, 2);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -185,20 +209,97 @@ export default function RunDetails({ runId, open, onClose }: RunDetailsProps) {
 
                 <TabsContent value="result">
                   {run.output ? (
-                    <div className="rounded-md border bg-slate-50 p-4">
-                      <pre className="whitespace-pre-wrap text-sm text-slate-800">
-                        {(() => {
-                          try {
-                            return JSON.stringify(
-                              JSON.parse(run.output),
-                              null,
-                              2
+                    <div className="space-y-3">
+                      {(() => {
+                        try {
+                          const parsed = JSON.parse(run.output);
+                          if (
+                            typeof parsed !== "object" ||
+                            parsed === null ||
+                            Array.isArray(parsed)
+                          ) {
+                            return (
+                              <div className="rounded-md border bg-slate-50 p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                    Value
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 gap-1 text-slate-500"
+                                    onClick={() =>
+                                      copyToClipboard(run.output).then(() =>
+                                        toast.success("Copied")
+                                      )
+                                    }
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                  {JSON.stringify(parsed, null, 2)}
+                                </pre>
+                              </div>
                             );
-                          } catch {
-                            return run.output;
                           }
-                        })()}
-                      </pre>
+                          return Object.entries(parsed).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className="rounded-md border bg-white p-4 shadow-sm"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                  {key}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 text-slate-500"
+                                  onClick={() =>
+                                    copyToClipboard(
+                                      getResultValueText(value)
+                                    ).then(() => toast.success(`Copied ${key}`))
+                                  }
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                  Copy
+                                </Button>
+                              </div>
+                              <div className="text-sm">
+                                {renderResultValue(value)}
+                              </div>
+                            </div>
+                          ));
+                        } catch {
+                          return (
+                            <div className="rounded-md border bg-slate-50 p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                  Value
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1 text-slate-500"
+                                  onClick={() =>
+                                    copyToClipboard(run.output).then(() =>
+                                      toast.success("Copied")
+                                    )
+                                  }
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                  Copy
+                                </Button>
+                              </div>
+                              <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                {run.output}
+                              </pre>
+                            </div>
+                          );
+                        }
+                      })()}
                     </div>
                   ) : (
                     <div className="text-slate-500">No output available.</div>
@@ -276,7 +377,11 @@ export default function RunDetails({ runId, open, onClose }: RunDetailsProps) {
                   size="sm"
                   className="gap-2 bg-blue-600 hover:bg-blue-700"
                   onClick={() => {
-                    window.location.href = `/presets/${run.preset_id}?tab=run`;
+                    if (onRunAgain) {
+                      onRunAgain(run);
+                    } else {
+                      window.location.href = `/presets/${run.preset_id}?tab=run`;
+                    }
                   }}
                 >
                   <Play className="h-4 w-4" />

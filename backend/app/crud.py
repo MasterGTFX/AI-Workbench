@@ -18,6 +18,22 @@ def get_provider(session: Session, provider_id: int) -> Optional[Provider]:
     return session.get(Provider, provider_id)
 
 
+def activate_provider(session: Session, provider_id: int) -> Optional[Provider]:
+    providers = get_providers(session)
+    target = None
+    for p in providers:
+        if p.id == provider_id:
+            p.active = True
+            target = p
+        else:
+            p.active = False
+        session.add(p)
+    session.commit()
+    if target:
+        session.refresh(target)
+    return target
+
+
 def create_provider(session: Session, provider: ProviderCreate) -> Provider:
     db_provider = Provider(**provider.model_dump())
     session.add(db_provider)

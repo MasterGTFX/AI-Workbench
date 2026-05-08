@@ -75,9 +75,12 @@ def run_preset(
     if not provider:
         raise HTTPException(status_code=400, detail="Provider not found")
 
-    model = db_preset.model
-    if request.overrides and request.overrides.model:
-        model = request.overrides.model
+    model = (
+        (request.overrides and request.overrides.model)
+        or db_preset.model
+        or provider.default_model
+        or ""
+    )
 
     run = Run(
         preset_id=preset_id,

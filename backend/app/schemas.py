@@ -27,6 +27,10 @@ class SchemaFieldResponse(SchemaFieldBase):
         from_attributes = True
 
 
+class ModelItem(BaseModel):
+    id: str
+
+
 class ProviderBase(BaseModel):
     name: str
     base_url: str
@@ -61,14 +65,14 @@ class PresetBase(BaseModel):
     description: Optional[str] = None
     tags: str = ""
     provider_id: Optional[int] = None
-    model: str
+    model: Optional[str] = None
     system_prompt: Optional[str] = None
     user_prompt_template: str
-    temperature: float = 0.7
-    max_tokens: int = 2000
-    top_p: float = 1.0
-    frequency_penalty: float = 0.0
-    presence_penalty: float = 0.0
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    top_p: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
     stream: bool = False
 
 
@@ -131,6 +135,8 @@ class RunOverrides(BaseModel):
     max_tokens: Optional[int] = None
     top_p: Optional[float] = None
     model: Optional[str] = None
+    system_prompt: Optional[str] = None
+    user_prompt_template: Optional[str] = None
 
 
 class RunExecuteRequest(BaseModel):
