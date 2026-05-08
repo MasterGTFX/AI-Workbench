@@ -212,10 +212,42 @@ ai-workbench/
 │   ├── tailwind.config.js
 │   └── postcss.config.js
 │
+├── scripts/
+│   ├── logs.sh
+│   ├── reset.sh
+│   ├── restart.sh
+│   └── stop.sh
+│
 └── README.md
 ```
 
 ---
+
+## Docker Quick Start
+
+Start the app:
+
+```bash
+docker compose up -d --build
+```
+
+Open:
+- Frontend: `http://localhost`
+
+Helper scripts:
+
+```bash
+./scripts/restart.sh   # git pull + rebuild + restart
+./scripts/logs.sh      # follow docker compose logs
+./scripts/stop.sh      # stop the stack
+./scripts/reset.sh     # full reset, including volumes
+```
+
+Typical update flow after pulling new repo changes:
+
+```bash
+./scripts/restart.sh
+```
 
 ## Local Development
 
