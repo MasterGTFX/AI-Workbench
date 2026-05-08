@@ -836,8 +836,10 @@ export default function PresetEditor() {
                         {runResult.output ? (
                           <div className="space-y-3">
                             {(() => {
+                              const output = runResult.output;
+                              if (!output) return null;
                               try {
-                                const parsed = JSON.parse(runResult.output);
+                                const parsed = JSON.parse(output);
                                 if (
                                   typeof parsed !== "object" ||
                                   parsed === null ||
@@ -854,7 +856,7 @@ export default function PresetEditor() {
                                           size="sm"
                                           className="h-7 gap-1 text-slate-500"
                                           onClick={() =>
-                                            copyToClipboard(runResult.output).then(() =>
+                                            copyToClipboard(output).then(() =>
                                               toast.success("Copied")
                                             )
                                           }
@@ -909,7 +911,7 @@ export default function PresetEditor() {
                                         size="sm"
                                         className="h-7 gap-1 text-slate-500"
                                         onClick={() =>
-                                          copyToClipboard(runResult.output).then(() =>
+                                          copyToClipboard(output).then(() =>
                                             toast.success("Copied")
                                           )
                                         }
@@ -919,7 +921,7 @@ export default function PresetEditor() {
                                       </Button>
                                     </div>
                                     <pre className="whitespace-pre-wrap text-sm text-slate-800">
-                                      {runResult.output}
+                                      {output}
                                     </pre>
                                   </div>
                                 );

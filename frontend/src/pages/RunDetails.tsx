@@ -211,8 +211,10 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                   {run.output ? (
                     <div className="space-y-3">
                       {(() => {
+                        const output = run.output;
+                        if (!output) return null;
                         try {
-                          const parsed = JSON.parse(run.output);
+                          const parsed = JSON.parse(output);
                           if (
                             typeof parsed !== "object" ||
                             parsed === null ||
@@ -229,7 +231,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                     size="sm"
                                     className="h-7 gap-1 text-slate-500"
                                     onClick={() =>
-                                      copyToClipboard(run.output).then(() =>
+                                      copyToClipboard(output).then(() =>
                                         toast.success("Copied")
                                       )
                                     }
@@ -284,7 +286,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                   size="sm"
                                   className="h-7 gap-1 text-slate-500"
                                   onClick={() =>
-                                    copyToClipboard(run.output).then(() =>
+                                    copyToClipboard(output).then(() =>
                                       toast.success("Copied")
                                     )
                                   }
@@ -294,7 +296,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                 </Button>
                               </div>
                               <pre className="whitespace-pre-wrap text-sm text-slate-800">
-                                {run.output}
+                                {output}
                               </pre>
                             </div>
                           );
