@@ -65,7 +65,7 @@ def delete_provider(session: Session, db_provider: Provider) -> None:
 def get_presets(session: Session) -> List[Preset]:
     statement = (
         select(Preset)
-        .options(selectinload(Preset.provider), selectinload(Preset.schema_fields))
+        .options(selectinload(Preset.schema_fields))
     )
     return list(session.exec(statement).all())
 
@@ -74,7 +74,7 @@ def get_preset(session: Session, preset_id: int) -> Optional[Preset]:
     statement = (
         select(Preset)
         .where(Preset.id == preset_id)
-        .options(selectinload(Preset.provider), selectinload(Preset.schema_fields))
+        .options(selectinload(Preset.schema_fields))
     )
     return session.exec(statement).first()
 
@@ -125,8 +125,6 @@ def duplicate_preset(session: Session, db_preset: Preset) -> Preset:
         name=f"{db_preset.name} (Copy)",
         description=db_preset.description,
         tags=db_preset.tags,
-        provider_id=db_preset.provider_id,
-        model=db_preset.model,
         system_prompt=db_preset.system_prompt,
         user_prompt_template=db_preset.user_prompt_template,
         temperature=db_preset.temperature,
@@ -165,7 +163,6 @@ def get_runs(session: Session) -> List[Run]:
     statement = (
         select(Run)
         .options(
-            selectinload(Run.preset).selectinload(Preset.provider),
             selectinload(Run.preset).selectinload(Preset.schema_fields),
         )
         .order_by(Run.created_at.desc())
@@ -178,7 +175,6 @@ def get_run(session: Session, run_id: int) -> Optional[Run]:
         select(Run)
         .where(Run.id == run_id)
         .options(
-            selectinload(Run.preset).selectinload(Preset.provider),
             selectinload(Run.preset).selectinload(Preset.schema_fields),
         )
     )

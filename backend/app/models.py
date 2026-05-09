@@ -14,17 +14,12 @@ class Provider(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    presets: List["Preset"] = Relationship(back_populates="provider")
-
-
 class Preset(SQLModel, table=True):
     __tablename__ = "preset"
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     description: Optional[str] = None
     tags: str = ""
-    provider_id: Optional[int] = Field(default=None, foreign_key="provider.id")
-    model: Optional[str] = Field(default=None)
     system_prompt: Optional[str] = None
     user_prompt_template: str
     temperature: Optional[float] = None
@@ -36,7 +31,6 @@ class Preset(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    provider: Optional[Provider] = Relationship(back_populates="presets")
     schema_fields: List["SchemaField"] = Relationship(
         back_populates="preset",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},

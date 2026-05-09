@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Check,
   Loader2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,12 @@ const navItems = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
   const [activeProvider, setActiveProvider] = useState<Provider | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,13 +109,36 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-[#f8fafc]">
-      <div className="flex items-center gap-2 px-5 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-          <Cpu className="h-5 w-5 text-white" />
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={cn(
+          "flex h-screen flex-col border-r bg-[#f8fafc] z-50",
+          "fixed left-0 top-0 w-64 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+              <Cpu className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-lg font-bold text-slate-900">AI Presets</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="md:hidden"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
-        <span className="text-lg font-bold text-slate-900">AI Presets</span>
-      </div>
 
       <div className="px-4 pb-2">
         <Button
@@ -274,6 +303,7 @@ export default function Sidebar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </aside>
+      </aside>
+    </>
   );
 }

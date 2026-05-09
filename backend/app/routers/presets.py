@@ -68,7 +68,6 @@ def generate_preset(
         tags=result.get("tags", ""),
         system_prompt=result.get("system_prompt") or None,
         user_prompt_template=result.get("user_prompt_template", "Analyze: {{input}}"),
-        model=result.get("model") or None,
         schema_fields=schema_fields,
     )
 
@@ -132,31 +131,21 @@ def run_preset(
     if not db_preset:
         raise HTTPException(status_code=404, detail="Preset not found")
 
-    # Resolve provider: run override > preset override > active provider
-    provider_id = None
-    if request.overrides and request.overrides.provider_id:
-        provider_id = request.overrides.provider_id
-    elif db_preset.provider_id:
-        provider_id = db_preset.provider_id
-    else:
-        providers = crud.get_providers(session)
-        for p in providers:
-            if p.active:
-                provider_id = p.id
-                break
-        if not provider_id and providers:
-            provider_id = providers[0].id
+    # Always use active provider
+    providers = crud.get_providers(session)
+    provider = None
+    for p in providers:
+        if p.active:
+            provider = p
+            break
+    if not provider and providers:
+        provider = providers[0]
 
-    if not provider_id:
-        raise HTTPException(status_code=400, detail="No provider configured. Add a provider or select one for this run.")
-
-    provider = crud.get_provider(session, provider_id)
     if not provider:
-        raise HTTPException(status_code=400, detail="Provider not found")
+        raise HTTPException(status_code=400, detail="No provider configured. Add a provider first.")
 
     model = (
         (request.overrides and request.overrides.model)
-        or db_preset.model
         or provider.default_model
         or ""
     )

@@ -166,7 +166,7 @@ def call_llm(
         api_key=api_key,
     )
 
-    model = overrides.get("model", preset.model or provider.default_model)
+    model = overrides.get("model", provider.default_model)
 
     user_prompt_template = overrides.get("user_prompt_template", preset.user_prompt_template)
     user_prompt = render_prompt(user_prompt_template, input_text)

@@ -101,20 +101,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
         <p className="text-sm text-slate-500">Manage app configuration</p>
       </div>
 
       <Tabs defaultValue="providers">
-        <TabsList className="mb-6">
+        <div className="mb-6 overflow-x-auto">
+          <TabsList>
           <TabsTrigger value="providers">Providers</TabsTrigger>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="apikeys">API Keys</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="importexport">Import/Export</TabsTrigger>
         </TabsList>
+        </div>
 
         <TabsContent value="providers">
           <div className="mb-4 flex items-center justify-between">
@@ -130,7 +132,7 @@ export default function SettingsPage() {
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
           ) : (
-            <div className="rounded-lg border">
+            <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-slate-50">

@@ -64,8 +64,6 @@ class PresetBase(BaseModel):
     name: str
     description: Optional[str] = None
     tags: str = ""
-    provider_id: Optional[int] = None
-    model: Optional[str] = None
     system_prompt: Optional[str] = None
     user_prompt_template: str
     temperature: Optional[float] = None
@@ -84,8 +82,6 @@ class PresetUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[str] = None
-    provider_id: Optional[int] = None
-    model: Optional[str] = None
     system_prompt: Optional[str] = None
     user_prompt_template: Optional[str] = None
     temperature: Optional[float] = None
@@ -101,7 +97,6 @@ class PresetResponse(PresetBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    provider: Optional[ProviderResponse] = None
     schema_fields: List[SchemaFieldResponse] = []
 
     class Config:
@@ -137,7 +132,6 @@ class RunOverrides(BaseModel):
     model: Optional[str] = None
     system_prompt: Optional[str] = None
     user_prompt_template: Optional[str] = None
-    provider_id: Optional[int] = None
 
 
 class PresetGenerateRequest(BaseModel):
@@ -151,7 +145,6 @@ class PresetGenerateResponse(BaseModel):
     tags: str = ""
     system_prompt: Optional[str] = None
     user_prompt_template: str
-    model: Optional[str] = None
     schema_fields: List[SchemaFieldCreate] = []
 
 

@@ -32,9 +32,6 @@ export interface Preset {
   name: string;
   description?: string;
   tags: string;
-  provider_id?: number;
-  provider?: Provider;
-  model?: string;
   system_prompt?: string;
   user_prompt_template: string;
   temperature?: number | null;
@@ -75,6 +72,5 @@ export interface PresetGenerateResponse {
   tags: string;
   system_prompt?: string;
   user_prompt_template: string;
-  model?: string;
   schema_fields: SchemaField[];
 }

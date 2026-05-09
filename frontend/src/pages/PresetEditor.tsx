@@ -71,7 +71,6 @@ const EMPTY_PRESET: Partial<Preset> = {
   name: "New Preset",
   description: "",
   tags: "",
-  provider_id: undefined,
   system_prompt: "",
   user_prompt_template: "",
   stream: false,
@@ -100,7 +99,6 @@ export default function PresetEditor() {
   const [running, setRunning] = useState(false);
   const [runSystemPrompt, setRunSystemPrompt] = useState("");
   const [runUserPromptTemplate, setRunUserPromptTemplate] = useState("");
-  const [runProviderId, setRunProviderId] = useState("");
 
   // History tab state
   const [runs, setRuns] = useState<Run[]>([]);
@@ -153,8 +151,7 @@ export default function PresetEditor() {
   useEffect(() => {
     setRunSystemPrompt(preset.system_prompt || "");
     setRunUserPromptTemplate(preset.user_prompt_template || "");
-    setRunProviderId("");
-  }, [preset.system_prompt, preset.user_prompt_template, preset.provider_id]);
+  }, [preset.system_prompt, preset.user_prompt_template]);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -254,7 +251,6 @@ export default function PresetEditor() {
         tags: string;
         system_prompt?: string;
         user_prompt_template: string;
-        model?: string;
         schema_fields: SchemaField[];
       };
       setPreset({
@@ -264,9 +260,7 @@ export default function PresetEditor() {
         tags: data.tags,
         system_prompt: data.system_prompt,
         user_prompt_template: data.user_prompt_template,
-        model: data.model,
         schema_fields: data.schema_fields.map((f, i) => ({ ...f, order: i })),
-        provider_id: aiProviderId ? Number(aiProviderId) : undefined,
       });
       setAiMode(false);
       toast.success("Preset generated! Review and save.");
@@ -281,10 +275,7 @@ export default function PresetEditor() {
     setPreset((prev) => ({ ...prev, ...updates }));
   }
 
-  function handleProviderChange(providerId: string) {
-    const pid = providerId ? Number(providerId) : undefined;
-    updatePreset({ provider_id: pid });
-  }
+
 
   // Schema field management
   function addField() {
@@ -358,9 +349,6 @@ export default function PresetEditor() {
     setRunning(true);
     try {
       const overrides: Record<string, any> = {};
-      if (runProviderId) {
-        overrides.provider_id = Number(runProviderId);
-      }
       if (runSystemPrompt.trim() !== "" && runSystemPrompt !== (preset.system_prompt || "")) {
         overrides.system_prompt = runSystemPrompt;
       }
@@ -422,7 +410,7 @@ export default function PresetEditor() {
   return (
     <div className="flex h-full flex-col">
       {/* Top bar */}
-      <div className="flex items-center justify-between border-b px-6 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-y-2 border-b px-4 py-3 md:px-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-5 w-5" />
@@ -437,7 +425,7 @@ export default function PresetEditor() {
             <Pencil className="h-4 w-4 text-slate-400" />
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {isNew && (
             <div className="flex items-center rounded-md border bg-slate-50 p-0.5">
               <Button
@@ -460,14 +448,16 @@ export default function PresetEditor() {
               </Button>
             </div>
           )}
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList>
-              <TabsTrigger value="configure">Configure</TabsTrigger>
-              <TabsTrigger value="schema">Schema</TabsTrigger>
-              <TabsTrigger value="run">Run</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="overflow-x-auto">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList>
+                <TabsTrigger value="configure">Configure</TabsTrigger>
+                <TabsTrigger value="schema">Schema</TabsTrigger>
+                <TabsTrigger value="run">Run</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           <Button variant="outline" onClick={() => navigate("/")}>
             Cancel
           </Button>
@@ -478,7 +468,7 @@ export default function PresetEditor() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6">
         {activeTab === "configure" && isNew && aiMode && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-3 flex flex-col items-center justify-start pt-12">
@@ -539,59 +529,10 @@ export default function PresetEditor() {
         {activeTab === "configure" && (!isNew || !aiMode) && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
-              {/* Model / Provider */}
+              {/* Details */}
               <div className="rounded-lg border p-5">
-                <h3 className="mb-4 text-sm font-semibold text-slate-900">Model / Provider</h3>
+                <h3 className="mb-4 text-sm font-semibold text-slate-900">Details</h3>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label className="mb-1 block">Provider Override</Label>
-                    <Select
-                      value={preset.provider_id ? String(preset.provider_id) : ""}
-                      onValueChange={handleProviderChange}
-                      placeholder="Use current active provider"
-                    >
-                      <SelectItem value="">Use current active provider</SelectItem>
-                      {providers.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </Select>
-                    {!preset.provider_id && (
-                      <p className="mt-1 text-xs text-slate-500">
-                        This preset will use whichever provider is currently active at runtime.
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="mb-1 block">Base URL</Label>
-                    <Input
-                      value={
-                        providers.find((p) => p.id === preset.provider_id)?.base_url ||
-                        providers.find((p) => p.active)?.base_url ||
-                        ""
-                      }
-                      disabled
-                      placeholder="https://api.openai.com/v1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block">Model</Label>
-                    <Input
-                      value={preset.model || ""}
-                      onChange={(e) =>
-                        updatePreset({
-                          model: e.target.value || undefined,
-                        })
-                      }
-                      placeholder="Leave empty to use active provider model"
-                    />
-                    {!preset.model && (
-                      <p className="mt-1 text-xs text-slate-500">
-                        Will use the active provider’s default model at runtime.
-                      </p>
-                    )}
-                  </div>
                   <div>
                     <Label className="mb-1 block">Tags</Label>
                     <Input
@@ -924,24 +865,11 @@ export default function PresetEditor() {
                 <div className="space-y-3">
                   <div>
                     <Label className="mb-1 block text-xs">Provider</Label>
-                    <Select
-                      value={runProviderId}
-                      onValueChange={setRunProviderId}
-                      placeholder="Use preset default"
-                    >
-                      <SelectItem value="">Use preset default</SelectItem>
-                      {providers.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {p.name} {p.active ? "(active)" : ""}
-                        </SelectItem>
-                      ))}
-                    </Select>
+                    <p className="text-sm text-slate-700">
+                      {providers.find((p) => p.active)?.name || "None"}
+                    </p>
                     <p className="mt-1 text-xs text-slate-500">
-                      {runProviderId
-                        ? `Overriding to: ${providers.find((p) => String(p.id) === runProviderId)?.name || "Unknown"}`
-                        : preset.provider_id
-                        ? `Using preset override: ${providers.find((p) => p.id === preset.provider_id)?.name || "Unknown"}`
-                        : `Using current active provider: ${providers.find((p) => p.active)?.name || "None"}`}
+                      Uses the currently active provider.
                     </p>
                   </div>
                   <div>
@@ -1212,7 +1140,7 @@ export default function PresetEditor() {
                 No runs yet.
               </div>
             ) : (
-              <div className="rounded-lg border">
+              <div className="overflow-x-auto rounded-lg border">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-slate-50">

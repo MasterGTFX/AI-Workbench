@@ -111,7 +111,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">History</h1>
         <p className="text-sm text-slate-500">View all past runs</p>
@@ -170,7 +170,7 @@ export default function HistoryPage() {
           No runs found.
         </div>
       ) : (
-        <div className="rounded-lg border">
+        <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>

@@ -88,7 +88,7 @@ export default function Dashboard() {
         (p) =>
           p.name.toLowerCase().includes(q) ||
           (p.description && p.description.toLowerCase().includes(q)) ||
-          (p.model || "").toLowerCase().includes(q)
+          (p.tags || "").toLowerCase().includes(q)
       );
     }
     if (tagFilter) {
@@ -147,7 +147,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">Presets</h1>
         <div className="flex items-center gap-2">
@@ -219,14 +219,13 @@ export default function Dashboard() {
           No presets found.
         </div>
       ) : view === "table" ? (
-        <div className="rounded-lg border">
+        <div className="overflow-x-auto rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Tags</TableHead>
-                <TableHead>Model</TableHead>
                 <TableHead>Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -254,11 +253,6 @@ export default function Dashboard() {
                         </Badge>
                       ))}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-slate-600">
-                    {preset.model || (
-                      <span className="text-slate-400 italic">Active model</span>
-                    )}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {formatDate(preset.updated_at)}
@@ -387,7 +381,6 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>{preset.model || "Active model"}</span>
                 <span>{formatDate(preset.updated_at)}</span>
               </div>
             </div>

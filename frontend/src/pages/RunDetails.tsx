@@ -95,7 +95,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative z-50 flex w-full max-w-2xl flex-col bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b px-6 py-4">
+        <div className="flex items-center justify-between border-b px-4 py-4 md:px-6">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
               Run Details
@@ -119,7 +119,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
           </div>
         ) : (
           <>
-            <div className="border-b bg-slate-50 px-6 py-4">
+            <div className="border-b bg-slate-50 px-4 py-4 md:px-6">
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div>
                   <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -190,14 +190,16 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
               </div>
             </div>
 
-            <div className="flex-1 overflow-auto px-6 py-4">
+            <div className="flex-1 overflow-auto px-4 py-4 md:px-6">
               <Tabs defaultValue="input">
-                <TabsList className="mb-4">
+                <div className="mb-4 overflow-x-auto">
+                  <TabsList>
                   <TabsTrigger value="input">Input</TabsTrigger>
                   <TabsTrigger value="result">Result</TabsTrigger>
                   <TabsTrigger value="raw">Raw JSON</TabsTrigger>
                   <TabsTrigger value="logs">Logs</TabsTrigger>
                 </TabsList>
+                </div>
 
                 <TabsContent value="input">
                   <div className="rounded-md border bg-slate-50 p-4">
@@ -345,7 +347,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
               </Tabs>
             </div>
 
-            <div className="border-t px-6 py-4">
+            <div className="border-t px-4 py-4 md:px-6">
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
