@@ -175,7 +175,7 @@ def run_preset(
         run.tokens_prompt = result["tokens_prompt"]
         run.tokens_completion = result["tokens_completion"]
     except Exception as e:
-        logger.exception("Preset run failed", extra={"preset_id": preset_id, "run_id": run.id, "provider_id": provider_id})
+        logger.exception("Preset run failed", extra={"preset_id": preset_id, "run_id": run.id, "provider_id": provider.id})
         run.status = "failed"
         run.error = str(e)
 

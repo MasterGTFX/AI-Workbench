@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { marked } from "marked";
 
 export function formatDate(date: string | Date): string {
   return format(new Date(date), "MMM d, yyyy HH:mm");
@@ -92,4 +93,26 @@ export function downloadMarkdown(content: string, filename: string) {
 
 export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
+}
+
+export function renderMarkdownToHtml(text: string): string {
+  return marked.parse(text, { async: false, breaks: true, gfm: true }) as string;
+}
+
+export async function copyToClipboardRich(plainText: string, htmlText: string): Promise<void> {
+  if (typeof ClipboardItem !== "undefined") {
+    try {
+      const blobHtml = new Blob([htmlText], { type: "text/html" });
+      const blobText = new Blob([plainText], { type: "text/plain" });
+      const data = new ClipboardItem({
+        "text/html": blobHtml,
+        "text/plain": blobText,
+      });
+      await navigator.clipboard.write([data]);
+      return;
+    } catch {
+      // Fallback to plain text
+    }
+  }
+  await navigator.clipboard.writeText(plainText);
 }

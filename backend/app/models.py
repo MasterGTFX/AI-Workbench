@@ -23,10 +23,11 @@ class Preset(SQLModel, table=True):
     system_prompt: Optional[str] = None
     user_prompt_template: str
     temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
     top_p: Optional[float] = None
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
+    reasoning_effort: Optional[str] = None
     stream: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

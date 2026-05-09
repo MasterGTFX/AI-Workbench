@@ -67,10 +67,11 @@ class PresetBase(BaseModel):
     system_prompt: Optional[str] = None
     user_prompt_template: str
     temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
     top_p: Optional[float] = None
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
+    reasoning_effort: Optional[str] = None
     stream: bool = False
 
 
@@ -85,10 +86,11 @@ class PresetUpdate(BaseModel):
     system_prompt: Optional[str] = None
     user_prompt_template: Optional[str] = None
     temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
     top_p: Optional[float] = None
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
+    reasoning_effort: Optional[str] = None
     stream: Optional[bool] = None
     schema_fields: Optional[List[SchemaFieldCreate]] = None
 
@@ -127,8 +129,11 @@ class RunResponse(RunBase):
 
 class RunOverrides(BaseModel):
     temperature: Optional[float] = None
-    max_tokens: Optional[int] = None
+    max_completion_tokens: Optional[int] = None
     top_p: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    reasoning_effort: Optional[str] = None
     model: Optional[str] = None
     system_prompt: Optional[str] = None
     user_prompt_template: Optional[str] = None

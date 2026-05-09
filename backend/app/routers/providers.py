@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,6 +9,7 @@ from app.database import get_session
 from app import crud, schemas
 
 router = APIRouter(prefix="/api/providers", tags=["providers"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=List[schemas.ProviderResponse])
@@ -76,4 +78,5 @@ def list_provider_models(
         models = client.models.list()
         return [{"id": m.id} for m in models.data]
     except Exception as e:
+        logger.exception("Failed to fetch provider models", extra={"provider_id": provider_id})
         raise HTTPException(status_code=400, detail=f"Failed to fetch models: {str(e)}")

@@ -26,7 +26,7 @@ def seed_data():
                 "system_prompt": "You are an expert at analyzing application logs and creating structured bug reports. Extract all relevant information and return it in the specified JSON format.",
                 "user_prompt_template": "Analyze the following logs and create a bug report:\n\n{{input}}",
                 "temperature": 0.2,
-                "max_tokens": 2000,
+                "max_completion_tokens": 2000,
                 "fields": [
                     {"name": "title", "type": "string", "required": True, "description": "Short bug title", "example": "Login button throws 500 error"},
                     {"name": "severity", "type": "enum", "required": True, "description": "Severity level", "enum_values": "low,medium,high,critical"},
@@ -44,7 +44,7 @@ def seed_data():
                 "system_prompt": "You are a professional business communication assistant. Generate polished business emails based on the provided context.",
                 "user_prompt_template": "Write a business email about:\n\n{{input}}",
                 "temperature": 0.5,
-                "max_tokens": 1500,
+                "max_completion_tokens": 1500,
                 "fields": [
                     {"name": "subject", "type": "string", "required": True, "description": "Email subject line"},
                     {"name": "greeting", "type": "string", "required": True, "description": "Email greeting"},
@@ -60,7 +60,7 @@ def seed_data():
                 "system_prompt": "You are a product manager assistant. Create detailed feature specifications from brief descriptions.",
                 "user_prompt_template": "Create a feature spec for:\n\n{{input}}",
                 "temperature": 0.3,
-                "max_tokens": 2500,
+                "max_completion_tokens": 2500,
                 "fields": [
                     {"name": "feature_name", "type": "string", "required": True, "description": "Feature name"},
                     {"name": "overview", "type": "string", "required": True, "description": "Feature overview"},
@@ -76,7 +76,7 @@ def seed_data():
                 "system_prompt": "You are a database specialist. Map CSV columns to database table schemas and suggest transformations.",
                 "user_prompt_template": "Map the following CSV data to a database schema:\n\n{{input}}",
                 "temperature": 0.2,
-                "max_tokens": 2000,
+                "max_completion_tokens": 2000,
                 "fields": [
                     {"name": "table_name", "type": "string", "required": True, "description": "Suggested table name"},
                     {"name": "columns", "type": "list[object]", "required": True, "description": "Column mappings"},
@@ -91,7 +91,7 @@ def seed_data():
                 "system_prompt": "You are a customer support analyst. Classify support tickets and provide structured summaries.",
                 "user_prompt_template": "Classify and summarize this support ticket:\n\n{{input}}",
                 "temperature": 0.2,
-                "max_tokens": 1500,
+                "max_completion_tokens": 1500,
                 "fields": [
                     {"name": "category", "type": "enum", "required": True, "description": "Ticket category", "enum_values": "bug,feature_request,billing,account,technical,other"},
                     {"name": "priority", "type": "enum", "required": True, "description": "Priority level", "enum_values": "low,medium,high,urgent"},

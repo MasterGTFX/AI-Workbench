@@ -20,6 +20,8 @@ import {
   formatDate,
   formatDuration,
   copyToClipboard,
+  copyToClipboardRich,
+  renderMarkdownToHtml,
   downloadJson,
 } from "@/utils/helpers";
 import toast from "react-hot-toast";
@@ -42,7 +44,12 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
     if (typeof value === "number")
       return <span className="text-emerald-600 font-medium">{value}</span>;
     if (typeof value === "string")
-      return <span className="text-slate-800">{value}</span>;
+      return (
+        <div
+          className="markdown-body text-sm text-slate-800"
+          dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(value) }}
+        />
+      );
     return (
       <pre className="whitespace-pre-wrap text-sm text-slate-700">
         {JSON.stringify(value, null, 2)}
@@ -217,6 +224,37 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                         if (!output) return null;
                         try {
                           const parsed = JSON.parse(output);
+                          if (typeof parsed === "string") {
+                            return (
+                              <div className="rounded-md border bg-white p-4 shadow-sm">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                    Value
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 gap-1 text-slate-500"
+                                    onClick={() =>
+                                      copyToClipboardRich(
+                                        parsed,
+                                        renderMarkdownToHtml(parsed),
+                                      ).then(() => toast.success("Copied"))
+                                    }
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                <div
+                                  className="markdown-body text-sm text-slate-800"
+                                  dangerouslySetInnerHTML={{
+                                    __html: renderMarkdownToHtml(parsed),
+                                  }}
+                                />
+                              </div>
+                            );
+                          }
                           if (
                             typeof parsed !== "object" ||
                             parsed === null ||
@@ -261,11 +299,19 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 gap-1 text-slate-500"
-                                  onClick={() =>
-                                    copyToClipboard(
-                                      getResultValueText(value)
-                                    ).then(() => toast.success(`Copied ${key}`))
-                                  }
+                                  onClick={() => {
+                                    const text = getResultValueText(value);
+                                    const promise =
+                                      typeof value === "string"
+                                        ? copyToClipboardRich(
+                                            text,
+                                            renderMarkdownToHtml(text),
+                                          )
+                                        : copyToClipboard(text);
+                                    promise.then(() =>
+                                      toast.success(`Copied ${key}`),
+                                    );
+                                  }}
                                 >
                                   <Copy className="h-3.5 w-3.5" />
                                   Copy
@@ -288,18 +334,22 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                   size="sm"
                                   className="h-7 gap-1 text-slate-500"
                                   onClick={() =>
-                                    copyToClipboard(output).then(() =>
-                                      toast.success("Copied")
-                                    )
+                                    copyToClipboardRich(
+                                      output,
+                                      renderMarkdownToHtml(output),
+                                    ).then(() => toast.success("Copied"))
                                   }
                                 >
                                   <Copy className="h-3.5 w-3.5" />
                                   Copy
                                 </Button>
                               </div>
-                              <pre className="whitespace-pre-wrap text-sm text-slate-800">
-                                {output}
-                              </pre>
+                              <div
+                                className="markdown-body text-sm text-slate-800"
+                                dangerouslySetInnerHTML={{
+                                  __html: renderMarkdownToHtml(output),
+                                }}
+                              />
                             </div>
                           );
                         }

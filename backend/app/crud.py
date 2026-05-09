@@ -128,10 +128,11 @@ def duplicate_preset(session: Session, db_preset: Preset) -> Preset:
         system_prompt=db_preset.system_prompt,
         user_prompt_template=db_preset.user_prompt_template,
         temperature=db_preset.temperature,
-        max_tokens=db_preset.max_tokens,
+        max_completion_tokens=db_preset.max_completion_tokens,
         top_p=db_preset.top_p,
         frequency_penalty=db_preset.frequency_penalty,
         presence_penalty=db_preset.presence_penalty,
+        reasoning_effort=db_preset.reasoning_effort,
         stream=db_preset.stream,
     )
     session.add(new_preset)

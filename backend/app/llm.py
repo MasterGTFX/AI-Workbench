@@ -55,14 +55,21 @@ def build_json_schema(fields: List[SchemaField]) -> dict:
         elif field_type == "list[number]":
             json_type = {"type": "array", "items": {"type": "number"}}
         elif field_type == "object":
-            json_type = {"type": "object"}
+            json_type = {"type": "object", "additionalProperties": False}
         elif field_type == "list[object]":
-            json_type = {"type": "array", "items": {"type": "object"}}
+            json_type = {"type": "array", "items": {"type": "object", "additionalProperties": False}}
         else:
             json_type = {"type": "string"}
 
+        desc_parts = []
         if field.description:
-            json_type["description"] = field.description
+            desc_parts.append(field.description)
+        if field.validation_hint:
+            desc_parts.append(f"Hint: {field.validation_hint}")
+        if field.default_value:
+            desc_parts.append(f"Default: {field.default_value}")
+        if desc_parts:
+            json_type["description"] = " | ".join(desc_parts)
         if field.example:
             try:
                 json_type["example"] = json.loads(field.example)
@@ -73,7 +80,7 @@ def build_json_schema(fields: List[SchemaField]) -> dict:
         if field.required:
             required.append(field.name)
 
-    schema: dict = {"type": "object", "properties": properties}
+    schema: dict = {"type": "object", "properties": properties, "additionalProperties": False}
     if required:
         schema["required"] = required
     return schema
@@ -99,6 +106,7 @@ def generate_preset_draft(provider: Provider, prompt: str) -> dict:
     model = provider.default_model or ""
 
     schema = _GeneratedPreset.model_json_schema()
+    schema["additionalProperties"] = False
     schema_json = json.dumps(schema, indent=2)
 
     system_prompt = (
@@ -127,7 +135,14 @@ def generate_preset_draft(provider: Provider, prompt: str) -> dict:
     try:
         response = client.chat.completions.create(
             **kwargs,
-            response_format={"type": "json_object"},
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "generated_preset",
+                    "strict": True,
+                    "schema": schema,
+                },
+            },
         )
     except Exception:
         response = client.chat.completions.create(**kwargs)
@@ -197,24 +212,39 @@ def call_llm(
         kwargs["presence_penalty"] = preset.presence_penalty
     if preset.temperature is not None:
         kwargs["temperature"] = preset.temperature
-    if preset.max_tokens is not None:
-        kwargs["max_tokens"] = preset.max_tokens
+    if preset.max_completion_tokens is not None:
+        kwargs["max_completion_tokens"] = preset.max_completion_tokens
     if preset.top_p is not None:
         kwargs["top_p"] = preset.top_p
+    if preset.reasoning_effort is not None:
+        kwargs["reasoning_effort"] = preset.reasoning_effort
 
     if "temperature" in overrides:
         kwargs["temperature"] = overrides["temperature"]
-    if "max_tokens" in overrides:
-        kwargs["max_tokens"] = overrides["max_tokens"]
+    if "max_completion_tokens" in overrides:
+        kwargs["max_completion_tokens"] = overrides["max_completion_tokens"]
     if "top_p" in overrides:
         kwargs["top_p"] = overrides["top_p"]
+    if "frequency_penalty" in overrides:
+        kwargs["frequency_penalty"] = overrides["frequency_penalty"]
+    if "presence_penalty" in overrides:
+        kwargs["presence_penalty"] = overrides["presence_penalty"]
+    if "reasoning_effort" in overrides:
+        kwargs["reasoning_effort"] = overrides["reasoning_effort"]
 
     start_time = time.time()
 
     try:
         response = client.chat.completions.create(
             **kwargs,
-            response_format={"type": "json_object"},
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "preset_output",
+                    "strict": True,
+                    "schema": schema,
+                },
+            },
         )
     except Exception:
         response = client.chat.completions.create(**kwargs)
