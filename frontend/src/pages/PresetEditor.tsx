@@ -48,6 +48,10 @@ import {
 	downloadJson,
 	downloadMarkdown,
 } from "@/utils/helpers";
+import {
+	renderResultValue,
+	getResultValueText,
+} from "@/utils/resultRenderers";
 import toast from "react-hot-toast";
 
 const FIELD_TYPES = [
@@ -78,8 +82,8 @@ const EMPTY_PRESET: Partial<Preset> = {
 	name: "New Preset",
 	description: "",
 	tags: "",
-	system_prompt: "",
-	user_prompt_template: "",
+	system_prompt: "You are a helpful assistant.",
+	user_prompt_template: "Process the following: {{input}}",
 	stream: false,
 	schema_fields: [],
 };
@@ -125,34 +129,6 @@ export default function PresetEditor() {
 	const [aiPrompt, setAiPrompt] = useState("");
 	const [aiGenerating, setAiGenerating] = useState(false);
 	const [aiProviderId, setAiProviderId] = useState<string>("");
-
-	function renderResultValue(value: unknown) {
-		if (value === null) return <span className="text-slate-400">null</span>;
-		if (typeof value === "boolean")
-			return <span className="text-blue-600 font-medium">{String(value)}</span>;
-		if (typeof value === "number")
-			return <span className="text-emerald-600 font-medium">{value}</span>;
-		if (typeof value === "string")
-			return (
-				<div
-					className="markdown-body text-sm text-slate-800"
-					dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(value) }}
-				/>
-			);
-		return (
-			<pre className="whitespace-pre-wrap text-sm text-slate-700">
-				{JSON.stringify(value, null, 2)}
-			</pre>
-		);
-	}
-
-	function getResultValueText(value: unknown): string {
-		if (value === null) return "null";
-		if (typeof value === "string") return value;
-		if (typeof value === "number" || typeof value === "boolean")
-			return String(value);
-		return JSON.stringify(value, null, 2);
-	}
 
 	useEffect(() => {
 		fetchProviders();
@@ -579,14 +555,6 @@ export default function PresetEditor() {
 									Details
 								</h3>
 								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-									<div>
-										<Label className="mb-1 block">Tags</Label>
-										<Input
-											value={preset.tags || ""}
-											onChange={(e) => updatePreset({ tags: e.target.value })}
-											placeholder="bug,email,support"
-										/>
-									</div>
 									<div className="sm:col-span-2">
 										<Label className="mb-1 block">Description</Label>
 										<Input
@@ -595,6 +563,14 @@ export default function PresetEditor() {
 												updatePreset({ description: e.target.value })
 											}
 											placeholder="Short description of what this preset does"
+										/>
+									</div>
+									<div>
+										<Label className="mb-1 block">Tags</Label>
+										<Input
+											value={preset.tags || ""}
+											onChange={(e) => updatePreset({ tags: e.target.value })}
+											placeholder="bug,email,support"
 										/>
 									</div>
 								</div>
@@ -1135,8 +1111,7 @@ export default function PresetEditor() {
                                                                 }
                                                                 if (
                                                                     typeof parsed !== "object" ||
-                                                                    parsed === null ||
-                                                                    Array.isArray(parsed)
+                                                                    parsed === null
                                                                 ) {
                                                                     return (
                                                                         <div className="rounded-md border bg-slate-50 p-4">
@@ -1161,6 +1136,31 @@ export default function PresetEditor() {
                                                                             <pre className="whitespace-pre-wrap text-sm text-slate-800">
                                                                                 {JSON.stringify(parsed, null, 2)}
                                                                             </pre>
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                                if (Array.isArray(parsed)) {
+                                                                    return (
+                                                                        <div className="rounded-md border bg-slate-50 p-4">
+                                                                            <div className="flex items-center justify-between mb-2">
+                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                                                    Value
+                                                                                </span>
+                                                                                <Button
+                                                                                    variant="ghost"
+                                                                                    size="sm"
+                                                                                    className="h-7 gap-1 text-slate-500"
+                                                                                    onClick={() =>
+                                                                                        copyToClipboard(getResultValueText(parsed)).then(() =>
+                                                                                            toast.success("Copied"),
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <Copy className="h-3.5 w-3.5" />
+                                                                                    Copy
+                                                                                </Button>
+                                                                            </div>
+                                                                            {renderResultValue(parsed)}
                                                                         </div>
                                                                     );
                                                                 }

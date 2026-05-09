@@ -9,40 +9,40 @@ Local-first web app for creating, managing, and running reusable AI presets with
 | Layer | Tech |
 |-------|------|
 | Backend | Python, FastAPI, SQLModel, SQLite, OpenAI SDK |
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS, Lucide React |
+| Frontend | React 18, Vite, TypeScript, Tailwind CSS, Lucide React, date-fns, marked |
 
 ## Project Structure
 
 ```
 backend/
   app/
-    main.py          # FastAPI app, CORS, lifespan, routers
+    main.py          # FastAPI app, CORS, lifespan, routers, /api/health
     database.py      # SQLite engine, SessionLocal
     models.py        # SQLModel tables: Provider, Preset, SchemaField, Run
     schemas.py       # Pydantic request/response models
     crud.py          # Database operations
-    llm.py           # OpenAI client, schema building, prompt rendering, validation
+    llm.py           # OpenAI client, schema building, prompt rendering, validation, preset generation
     seed.py          # Demo data on first startup
     routers/
-      providers.py   # /api/providers
-      presets.py     # /api/presets
-      runs.py        # /api/runs, /api/presets/{id}/run
+      providers.py   # /api/providers, /activate, /models
+      presets.py     # /api/presets, /generate, /duplicate, /run
+      runs.py        # /api/runs
 frontend/
   src/
     api/client.ts    # Axios instance, auto-appends trailing slashes
     types/index.ts   # TypeScript types mirroring backend schemas
     utils/
       cn.ts          # clsx + tailwind-merge
-      helpers.ts     # formatDate, formatDuration, tagColor, buildJsonSchema, download helpers
+      helpers.ts     # formatDate, formatDuration, tagColor, buildJsonSchema, download/copy helpers, markdown rendering
     components/
       ui/            # Reusable UI primitives (Button, Input, Dialog, Tabs, Select, etc.)
       Layout.tsx     # Sidebar + Outlet
-      Sidebar.tsx    # Navigation, active provider card
+      Sidebar.tsx    # Navigation, active provider card, provider switcher + model picker dialog
     pages/
-      Dashboard.tsx       # Presets list, search, filter, sort, pagination
-      PresetEditor.tsx    # Configure / Schema / Run / History tabs
-      HistoryPage.tsx     # Global runs list
-      RunDetails.tsx      # Run detail drawer/dialog
+      Dashboard.tsx       # Presets list, search, filter, sort, pagination, table/card views
+      PresetEditor.tsx    # Configure / Schema / Run / History tabs, AI generation, run overrides
+      HistoryPage.tsx     # Global runs list, search/filter, pagination
+      RunDetails.tsx      # Run detail drawer/dialog, markdown rendering, run again
       SettingsPage.tsx    # Provider management
     routes/AppRoutes.tsx
 ```
@@ -53,7 +53,7 @@ frontend/
 - **SQLModel** for ORM + Pydantic validation in one model
 - **Router-based** API organization (`routers/*.py`)
 - **CRUD module** separates DB logic from HTTP handlers
-- **LLM module** is pure logic: schema → JSON, template → prompt, output → validation
+- **LLM module** is pure logic: schema → JSON, template → prompt, output → validation, preset generation
 - **Seed on startup**: `lifespan` creates tables and seeds if DB is empty
 - Trailing slashes on all API endpoints (axios interceptor handles this)
 
@@ -100,6 +100,13 @@ rm backend/app.db
 ## Important Notes
 
 - The OpenAI client is initialized per-request with the provider's `base_url` and key.
-- `response_format: {type: "json_object"}` is used when the API supports it.
+- `response_format: {type: "json_schema", json_schema: {...}}` is used when the API supports it; falls back to plain JSON on error.
 - Schema fields support: `string`, `number`, `integer`, `boolean`, `enum`, `list[string]`, `list[number]`, `object`, `list[object]`.
+- Preset model parameters (`temperature`, `max_completion_tokens`, `top_p`, `frequency_penalty`, `presence_penalty`, `reasoning_effort`, `stream`) are all **optional**.
+- Runs support **overrides** for: `model`, `system_prompt`, `user_prompt_template`, and all numeric params.
+- **Preset generation**: `POST /api/presets/generate/` uses the active provider to generate a complete preset draft from a natural-language prompt.
+- **Provider activation**: Only one provider is active at a time; `POST /api/providers/{id}/activate` switches it.
+- **Model fetching**: `GET /api/providers/{id}/models` lists available models from the provider's API.
 - Frontend proxy in `vite.config.ts` forwards `/api` to `localhost:8000`.
+- Markdown in string result fields is rendered via `marked` and styled with `.markdown-body` CSS.
+- Rich clipboard copy (`copyToClipboardRich`) writes both `text/html` and `text/plain` for pasting formatted output.

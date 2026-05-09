@@ -9,6 +9,7 @@ It provides a clean interface for:
 - Validating structured AI responses
 - Saving run history
 - Testing prompts quickly
+- Generating presets with AI
 
 The goal is to make repetitive AI workflows reusable, predictable, and easy to iterate on.
 
@@ -24,7 +25,7 @@ Create reusable AI workflows containing:
 - System prompt
 - User prompt template
 - Structured output schema
-- Model parameters
+- Optional model parameters (temperature, max completion tokens, top_p, frequency penalty, presence penalty, reasoning effort, stream)
 
 Example presets included out of the box:
 - Bug Report Generator
@@ -33,17 +34,25 @@ Example presets included out of the box:
 - DB Import Mapper
 - Support Ticket Classifier
 
+### AI Preset Generation
+
+Describe what you want in plain language and the app generates a complete preset draft:
+- Name, description, and tags
+- System and user prompts (with `{{input}}` placeholder)
+- Structured output schema with appropriate field types
+
 ### Structured Output Schema Builder
 
 Visually define output fields with:
 - Field name
-- Type (string, number, integer, boolean, enum, list[string], list[number], object, list[object])
+- Type (`string`, `number`, `integer`, `boolean`, `enum`, `list[string]`, `list[number]`, `object`, `list[object]`)
 - Required flag
 - Description
-- Enum values
+- Enum values (comma-separated)
 - Validation hints
 - Example values
 - Default values
+- Display order
 
 Generated schemas are automatically validated against AI responses.
 
@@ -62,17 +71,28 @@ Each provider can define:
 - API key
 - Active status
 
+The sidebar shows the active provider and opens a model-picker dialog that fetches available models from the provider's API.
+
 ### Run & Validate
 
 Run presets against text input and get:
 - Structured JSON output
 - Validation status
 - Raw JSON view
+- Per-field result cards with copy buttons
+- Markdown rendering for string fields
+- Rich HTML copy (preserves bold, italic, lists when pasting)
 - Copy/export JSON
 - Copy/export Markdown
 - Token usage
 - Duration metrics
 - Run history
+
+**Run Overrides** — Override at execution time:
+- Model
+- System prompt
+- User prompt template
+- Temperature, max completion tokens, top_p, frequency penalty, presence penalty, reasoning effort
 
 ---
 
@@ -88,14 +108,14 @@ Run presets against text input and get:
 ### Preset Editor
 
 **Configure Tab**
-- Provider & model selection
+- Provider & model selection (inherited from active provider)
 - System & user prompts
-- Model parameters (temperature, max tokens, top_p, etc.)
-- Quick test panel
+- Model parameters (all optional)
+- AI generation panel for new presets
 
 **Schema Tab**
 - Visual schema editor
-- Field type selection
+- Field type selection (including enum)
 - JSON Schema preview
 
 **Run Tab**
@@ -104,19 +124,23 @@ Run presets against text input and get:
 - Results with JSON/Markdown export
 - Validation status
 - Run metrics
+- Markdown rendering for string values
 
 **History Tab**
 - Previous runs for the preset
 - Run details dialog
+- Run again with pre-filled input
 
 ### History
 - All runs across presets
 - Search/filter by preset, status
-- Run details
+- Run details with markdown rendering
+- Run again
 
 ### Settings
 - Provider management (add/edit/delete)
 - API key configuration
+- Active provider toggle
 
 ---
 
@@ -134,11 +158,13 @@ Run presets against text input and get:
 - Vite
 - TypeScript
 - Tailwind CSS
-- shadcn/ui-inspired components
+- shadcn/ui-inspired components (custom built)
 - Lucide React icons
 - React Router DOM
 - Axios
 - React Hot Toast
+- date-fns
+- marked (markdown rendering)
 
 ---
 
@@ -324,8 +350,11 @@ Production build output goes to `frontend/dist/`.
 ```http
 GET    /api/providers/
 POST   /api/providers/
+GET    /api/providers/{id}/
 PUT    /api/providers/{id}/
 DELETE /api/providers/{id}/
+POST   /api/providers/{id}/activate
+GET    /api/providers/{id}/models
 ```
 
 ### Presets
@@ -336,14 +365,20 @@ GET    /api/presets/{id}/
 PUT    /api/presets/{id}/
 DELETE /api/presets/{id}/
 POST   /api/presets/{id}/duplicate/
+POST   /api/presets/generate/
+POST   /api/presets/{id}/run/
 ```
 
 ### Runs
 ```http
 GET    /api/runs/
 GET    /api/runs/{id}/
-POST   /api/presets/{id}/run/
 DELETE /api/runs/{id}/
+```
+
+### Health
+```http
+GET    /api/health
 ```
 
 ---
@@ -358,6 +393,8 @@ Define:
 - System prompt: "You are an expert at analyzing application logs..."
 - User prompt template: "Analyze the following logs and create a bug report:\n\n{{input}}"
 - Model: gpt-4o
+
+Or use **AI Generation**: type "Create a preset that extracts structured bug reports from application logs" and let the app generate the preset.
 
 ### 2. Add a Schema
 
@@ -376,9 +413,10 @@ Example fields:
 
 Paste logs, stack traces, or notes into the input field and click **Run**. The app will:
 - Render the prompt template
-- Call the configured model
+- Call the configured model via the active provider
 - Validate the structured JSON output
 - Save the run to history
+- Render markdown in string fields for readable output
 
 ---
 

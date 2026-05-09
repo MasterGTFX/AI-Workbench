@@ -24,6 +24,10 @@ import {
   renderMarkdownToHtml,
   downloadJson,
 } from "@/utils/helpers";
+import {
+  renderResultValue,
+  getResultValueText,
+} from "@/utils/resultRenderers";
 import toast from "react-hot-toast";
 
 interface RunDetailsProps {
@@ -36,34 +40,6 @@ interface RunDetailsProps {
 export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDetailsProps) {
   const [run, setRun] = useState<Run | null>(null);
   const [loading, setLoading] = useState(true);
-
-  function renderResultValue(value: unknown) {
-    if (value === null) return <span className="text-slate-400">null</span>;
-    if (typeof value === "boolean")
-      return <span className="text-blue-600 font-medium">{String(value)}</span>;
-    if (typeof value === "number")
-      return <span className="text-emerald-600 font-medium">{value}</span>;
-    if (typeof value === "string")
-      return (
-        <div
-          className="markdown-body text-sm text-slate-800"
-          dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(value) }}
-        />
-      );
-    return (
-      <pre className="whitespace-pre-wrap text-sm text-slate-700">
-        {JSON.stringify(value, null, 2)}
-      </pre>
-    );
-  }
-
-  function getResultValueText(value: unknown): string {
-    if (value === null) return "null";
-    if (typeof value === "string") return value;
-    if (typeof value === "number" || typeof value === "boolean")
-      return String(value);
-    return JSON.stringify(value, null, 2);
-  }
 
   useEffect(() => {
     if (!open) return;
@@ -255,11 +231,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                               </div>
                             );
                           }
-                          if (
-                            typeof parsed !== "object" ||
-                            parsed === null ||
-                            Array.isArray(parsed)
-                          ) {
+                          if (typeof parsed !== "object" || parsed === null) {
                             return (
                               <div className="rounded-md border bg-slate-50 p-4">
                                 <div className="flex items-center justify-between mb-2">
@@ -283,6 +255,31 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                 <pre className="whitespace-pre-wrap text-sm text-slate-800">
                                   {JSON.stringify(parsed, null, 2)}
                                 </pre>
+                              </div>
+                            );
+                          }
+                          if (Array.isArray(parsed)) {
+                            return (
+                              <div className="rounded-md border bg-slate-50 p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                    Value
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 gap-1 text-slate-500"
+                                    onClick={() =>
+                                      copyToClipboard(getResultValueText(parsed)).then(() =>
+                                        toast.success("Copied")
+                                      )
+                                    }
+                                  >
+                                    <Copy className="h-3.5 w-3.5" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                {renderResultValue(parsed)}
                               </div>
                             );
                           }
