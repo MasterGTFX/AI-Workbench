@@ -70,10 +70,30 @@ def list_provider_models(
     provider = crud.get_provider(session, provider_id)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
+
+    api_key = provider.api_key or os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Provider '{provider.name}' has no API key configured. "
+                "Save an API key in Settings first."
+            ),
+        )
+
+    if "localhost:11434" in provider.base_url:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Provider base URL points to localhost:11434. Inside Docker, localhost is the backend container. "
+                "Use http://host.docker.internal:11434/v1 instead, or expose Ollama on the Docker network."
+            ),
+        )
+
     try:
         client = OpenAI(
             base_url=provider.base_url,
-            api_key=provider.api_key or os.environ.get("OPENAI_API_KEY", ""),
+            api_key=api_key,
         )
         models = client.models.list()
         return [{"id": m.id} for m in models.data]

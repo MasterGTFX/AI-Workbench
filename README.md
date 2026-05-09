@@ -269,6 +269,11 @@ Helper scripts:
 ./scripts/reset.sh     # full reset, including volumes
 ```
 
+Notes:
+- The backend container has outbound internet access for remote providers.
+- For OpenAI/OpenRouter model fetching, you must save a provider API key in Settings.
+- For local Ollama from Docker, do not use `http://localhost:11434/v1`. Use `http://host.docker.internal:11434/v1` instead.
+
 Typical update flow after pulling new repo changes:
 
 ```bash

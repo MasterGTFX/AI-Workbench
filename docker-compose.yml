@@ -6,6 +6,8 @@ services:
     environment:
       - DATABASE_URL=sqlite:///data/app.db
       - ALLOW_ORIGINS=http://localhost
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health/')"]
