@@ -12,6 +12,7 @@ class SchemaFieldBase(BaseModel):
     validation_hint: Optional[str] = None
     example: Optional[str] = None
     default_value: Optional[str] = None
+    properties: Optional[str] = None
     order: int = 0
 
 
@@ -156,3 +157,4 @@ class PresetGenerateResponse(BaseModel):
 class RunExecuteRequest(BaseModel):
     input: str
     overrides: Optional[RunOverrides] = None
+    images: Optional[List[str]] = None

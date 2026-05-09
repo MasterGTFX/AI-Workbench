@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	useLocation,
 	useNavigate,
@@ -52,6 +52,7 @@ import {
 	renderResultValue,
 	getResultValueText,
 } from "@/utils/resultRenderers";
+import SchemaNestedEditor from "@/components/SchemaNestedEditor";
 import toast from "react-hot-toast";
 
 const FIELD_TYPES = [
@@ -114,6 +115,8 @@ export default function PresetEditor() {
 	const [running, setRunning] = useState(false);
 	const [runSystemPrompt, setRunSystemPrompt] = useState("");
 	const [runUserPromptTemplate, setRunUserPromptTemplate] = useState("");
+	const [attachedImages, setAttachedImages] = useState<{ name: string; dataUrl: string }[]>([]);
+	const imageInputRef = useRef<HTMLInputElement>(null);
 
 	// History tab state
 	const [runs, setRuns] = useState<Run[]>([]);
@@ -319,6 +322,14 @@ export default function PresetEditor() {
 		setSelectedFieldId(null);
 	}
 
+	function tryParseLength(jsonStr: string): number | null {
+		try {
+			return JSON.parse(jsonStr).length;
+		} catch {
+			return null;
+		}
+	}
+
 	function moveField(index: number, direction: -1 | 1) {
 		const fields = [...(preset.schema_fields || [])];
 		const newIndex = index + direction;
@@ -362,6 +373,7 @@ export default function PresetEditor() {
 			}
 			const res = await apiClient.post<Run>(`/presets/${presetId}/run`, {
 				input: runInput,
+				images: attachedImages.map((img) => img.dataUrl),
 				overrides: Object.keys(overrides).length ? overrides : undefined,
 			});
 			setRunResult(res.data);
@@ -773,6 +785,12 @@ export default function PresetEditor() {
 											<span className="text-xs text-slate-500">
 												{field.type}
 											</span>
+											{(field.type === "object" || field.type === "list[object]") &&
+												field.properties && (
+													<span className="text-xs text-blue-600">
+														({tryParseLength(field.properties)} props)
+													</span>
+												)}
 										</div>
 										<div className="flex items-center gap-1">
 											{field.required && (
@@ -918,6 +936,20 @@ export default function PresetEditor() {
 											placeholder="Default (optional)"
 										/>
 									</div>
+									{(fieldForm.type === "object" || fieldForm.type === "list[object]") && (
+										<div>
+											<Label className="mb-1 block">Object Properties</Label>
+											<SchemaNestedEditor
+												value={fieldForm.properties || ""}
+												onChange={(v) =>
+													setFieldForm({
+														...fieldForm,
+														properties: v || undefined,
+													})
+												}
+											/>
+										</div>
+									)}
 									<div className="flex gap-2 pt-2">
 										<Button
 											onClick={saveField}
@@ -974,22 +1006,67 @@ export default function PresetEditor() {
 									rows={12}
 								/>
 								<div className="mt-3 flex items-center gap-2">
+									<input
+										ref={imageInputRef}
+										type="file"
+										accept="image/*"
+										multiple
+										className="hidden"
+										onChange={(e) => {
+											const files = e.target.files;
+											if (!files) return;
+											const loaded: { name: string; dataUrl: string }[] = [];
+											Array.from(files).forEach((file) => {
+												const reader = new FileReader();
+												reader.onload = (ev) => {
+													loaded.push({ name: file.name, dataUrl: ev.target?.result as string });
+													if (loaded.length === files.length) {
+														setAttachedImages((prev) => [...prev, ...loaded]);
+													}
+												};
+												reader.readAsDataURL(file);
+											});
+											e.target.value = "";
+										}}
+									/>
 									<Button
 										variant="outline"
 										size="sm"
 										className="gap-1"
-										disabled
+										onClick={() => imageInputRef.current?.click()}
 									>
-										<Plus className="h-4 w-4" /> Add File
+										<Plus className="h-4 w-4" /> Add Image
 									</Button>
 									<Button
 										variant="ghost"
 										size="sm"
-										onClick={() => setRunInput("")}
+										onClick={() => {
+											setRunInput("");
+											setAttachedImages([]);
+										}}
 									>
 										Clear
 									</Button>
 								</div>
+								{attachedImages.length > 0 && (
+									<div className="mt-3 flex flex-wrap gap-2">
+										{attachedImages.map((img, idx) => (
+											<div key={idx} className="relative group">
+												<img
+													src={img.dataUrl}
+													alt={img.name}
+													className="h-16 w-16 rounded-md object-cover border"
+												/>
+												<button
+													onClick={() => setAttachedImages((prev) => prev.filter((_, i) => i !== idx))}
+													className="absolute -right-1 -top-1 rounded-full bg-red-500 text-white p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+												>
+													<X className="h-3 w-3" />
+												</button>
+											</div>
+										))}
+									</div>
+								)}
 							</div>
 
 							<div className="rounded-lg border p-5">

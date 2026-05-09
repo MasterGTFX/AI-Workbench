@@ -14,6 +14,7 @@ class Provider(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class Preset(SQLModel, table=True):
     __tablename__ = "preset"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -50,6 +51,7 @@ class SchemaField(SQLModel, table=True):
     validation_hint: Optional[str] = None
     example: Optional[str] = None
     default_value: Optional[str] = None
+    properties: Optional[str] = None
     order: int = 0
 
     preset: Optional[Preset] = Relationship(back_populates="schema_fields")

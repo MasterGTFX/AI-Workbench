@@ -24,6 +24,7 @@ export interface SchemaField {
 	validation_hint?: string;
 	example?: string;
 	default_value?: string;
+	properties?: string;
 	order: number;
 }
 

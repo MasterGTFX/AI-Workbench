@@ -58,6 +58,7 @@ def generate_preset(
                 validation_hint=f.get("validation_hint") or None,
                 example=f.get("example") or None,
                 default_value=f.get("default_value") or None,
+                properties=f.get("properties") or None,
                 order=idx,
             )
         )
@@ -165,7 +166,7 @@ def run_preset(
             else None
         )
         result = llm.call_llm(
-            provider, db_preset, request.input, db_preset.schema_fields, overrides
+            provider, db_preset, request.input, db_preset.schema_fields, overrides, request.images
         )
 
         run.status = "success"

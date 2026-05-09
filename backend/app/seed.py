@@ -79,7 +79,7 @@ def seed_data():
                 "max_completion_tokens": 2000,
                 "fields": [
                     {"name": "table_name", "type": "string", "required": True, "description": "Suggested table name"},
-                    {"name": "columns", "type": "list[object]", "required": True, "description": "Column mappings"},
+                    {"name": "columns", "type": "list[object]", "required": True, "description": "Column mappings", "properties": '[{"name":"source_column","type":"string","required":true,"description":"Original CSV column name"},{"name":"target_column","type":"string","required":true,"description":"Database column name"},{"name":"data_type","type":"string","required":true,"description":"Suggested SQL data type"},{"name":"nullable","type":"boolean","required":true,"description":"Whether the column allows nulls"}]'},
                     {"name": "data_types", "type": "object", "required": True, "description": "Suggested data types"},
                     {"name": "transformations", "type": "list[string]", "required": False, "description": "Suggested transformations"},
                 ],

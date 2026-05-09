@@ -121,37 +121,16 @@ def delete_preset(session: Session, db_preset: Preset) -> None:
 
 
 def duplicate_preset(session: Session, db_preset: Preset) -> Preset:
-    new_preset = Preset(
-        name=f"{db_preset.name} (Copy)",
-        description=db_preset.description,
-        tags=db_preset.tags,
-        system_prompt=db_preset.system_prompt,
-        user_prompt_template=db_preset.user_prompt_template,
-        temperature=db_preset.temperature,
-        max_completion_tokens=db_preset.max_completion_tokens,
-        top_p=db_preset.top_p,
-        frequency_penalty=db_preset.frequency_penalty,
-        presence_penalty=db_preset.presence_penalty,
-        reasoning_effort=db_preset.reasoning_effort,
-        stream=db_preset.stream,
-    )
+    preset_data = db_preset.model_dump(exclude={"id", "schema_fields", "created_at", "updated_at"})
+    preset_data["name"] = f"{db_preset.name} (Copy)"
+    new_preset = Preset(**preset_data)
     session.add(new_preset)
     session.commit()
     session.refresh(new_preset)
 
     for field in db_preset.schema_fields:
-        new_field = SchemaField(
-            preset_id=new_preset.id,
-            name=field.name,
-            type=field.type,
-            required=field.required,
-            description=field.description,
-            enum_values=field.enum_values,
-            validation_hint=field.validation_hint,
-            example=field.example,
-            default_value=field.default_value,
-            order=field.order,
-        )
+        field_data = field.model_dump(exclude={"id", "preset_id"})
+        new_field = SchemaField(preset_id=new_preset.id, **field_data)
         session.add(new_field)
     session.commit()
     session.refresh(new_preset)

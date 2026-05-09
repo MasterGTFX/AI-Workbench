@@ -44,26 +44,72 @@ export function tagColor(tag: string): string {
   );
 }
 
-export function buildJsonSchema(fields: { name: string; type: string; required: boolean; description?: string; example?: string; default_value?: string; enum_values?: string }[]) {
+interface FieldDef {
+  name: string;
+  type: string;
+  required?: boolean;
+  description?: string;
+  example?: string;
+  default_value?: string;
+  enum_values?: string;
+  properties?: string;
+}
+
+function buildFieldSchema(f: FieldDef): Record<string, any> {
+  const prop: Record<string, any> = {};
+
+  if (f.type === "enum") {
+    prop.type = "string";
+    if (f.enum_values) {
+      prop.enum = f.enum_values.split(",").map((v) => v.trim()).filter(Boolean);
+    }
+  } else if (f.type === "list[string]") {
+    prop.type = "array";
+    prop.items = { type: "string" };
+  } else if (f.type === "list[number]") {
+    prop.type = "array";
+    prop.items = { type: "number" };
+  } else if (f.type === "object") {
+    prop.type = "object";
+    prop.additionalProperties = false;
+    addNestedProperties(prop, f.properties);
+  } else if (f.type === "list[object]") {
+    prop.type = "array";
+    prop.items = { type: "object", additionalProperties: false };
+    addNestedProperties(prop.items, f.properties);
+  } else {
+    prop.type = f.type;
+  }
+
+  if (f.description) prop.description = f.description;
+  if (f.example) prop.example = f.example;
+  if (f.default_value) prop.default = f.default_value;
+  return prop;
+}
+
+function addNestedProperties(target: Record<string, any>, properties?: string): void {
+  if (!properties) return;
+  try {
+    const nested = JSON.parse(properties) as FieldDef[];
+    const props: Record<string, any> = {};
+    const req: string[] = [];
+    for (const item of nested) {
+      props[item.name] = buildFieldSchema(item);
+      if (item.required) req.push(item.name);
+    }
+    if (Object.keys(props).length) target.properties = props;
+    if (req.length) target.required = req;
+  } catch { /* ignore invalid properties */ }
+}
+
+export function buildJsonSchema(fields: FieldDef[]) {
   const schema: Record<string, any> = {
     type: "object",
     properties: {},
     required: [],
   };
   for (const f of fields) {
-    const prop: Record<string, any> = {};
-    if (f.type === "enum") {
-      prop.type = "string";
-      if (f.enum_values) {
-        prop.enum = f.enum_values.split(",").map((v) => v.trim()).filter(Boolean);
-      }
-    } else {
-      prop.type = f.type;
-    }
-    if (f.description) prop.description = f.description;
-    if (f.example) prop.example = f.example;
-    if (f.default_value) prop.default = f.default_value;
-    schema.properties[f.name] = prop;
+    schema.properties[f.name] = buildFieldSchema(f);
     if (f.required) schema.required.push(f.name);
   }
   return schema;

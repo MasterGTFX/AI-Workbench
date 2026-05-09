@@ -18,6 +18,7 @@ class _GeneratedSchemaField(BaseModel):
     validation_hint: Optional[str] = None
     example: Optional[str] = None
     default_value: Optional[str] = None
+    properties: Optional[str] = None
 
 
 class _GeneratedPreset(BaseModel):
@@ -30,53 +31,102 @@ class _GeneratedPreset(BaseModel):
     schema_fields: List[_GeneratedSchemaField]
 
 
+def _build_field_schema(
+    type_: str,
+    description: Optional[str] = None,
+    enum_values: Optional[str] = None,
+    validation_hint: Optional[str] = None,
+    example: Optional[str] = None,
+    default_value: Optional[str] = None,
+    properties: Optional[str] = None,
+    required: bool = True,
+) -> dict:
+    if type_ == "string":
+        schema: dict = {"type": "string"}
+    elif type_ == "number":
+        schema = {"type": "number"}
+    elif type_ == "integer":
+        schema = {"type": "integer"}
+    elif type_ == "boolean":
+        schema = {"type": "boolean"}
+    elif type_ == "enum":
+        values = [v.strip() for v in enum_values.split(",")] if enum_values else []
+        schema = {"type": "string", "enum": values}
+    elif type_ == "list[string]":
+        schema = {"type": "array", "items": {"type": "string"}}
+    elif type_ == "list[number]":
+        schema = {"type": "array", "items": {"type": "number"}}
+    elif type_ == "object":
+        schema = {"type": "object", "additionalProperties": False}
+        _add_nested_properties(schema, properties)
+    elif type_ == "list[object]":
+        schema = {"type": "array", "items": {"type": "object", "additionalProperties": False}}
+        _add_nested_properties(schema["items"], properties)
+    else:
+        schema = {"type": "string"}
+
+    desc_parts = []
+    if description:
+        desc_parts.append(description)
+    if validation_hint:
+        desc_parts.append(f"Hint: {validation_hint}")
+    if default_value:
+        desc_parts.append(f"Default: {default_value}")
+    if desc_parts:
+        schema["description"] = " | ".join(desc_parts)
+    if example:
+        try:
+            schema["example"] = json.loads(example)
+        except (json.JSONDecodeError, TypeError):
+            schema["example"] = example
+
+    return schema
+
+
+def _add_nested_properties(target: dict, properties: Optional[str]) -> None:
+    if not properties:
+        return
+    try:
+        nested = json.loads(properties)
+    except (json.JSONDecodeError, TypeError):
+        return
+
+    props = {}
+    req = []
+    for item in nested:
+        props[item["name"]] = _build_field_schema(
+            type_=item.get("type", "string"),
+            description=item.get("description"),
+            enum_values=item.get("enum_values"),
+            validation_hint=item.get("validation_hint"),
+            example=item.get("example"),
+            default_value=item.get("default_value"),
+            properties=item.get("properties"),
+            required=item.get("required", True),
+        )
+        if item.get("required"):
+            req.append(item["name"])
+
+    if props:
+        target["properties"] = props
+    if req:
+        target["required"] = req
+
+
 def build_json_schema(fields: List[SchemaField]) -> dict:
     properties: dict = {}
     required: List[str] = []
     for field in fields:
-        field_type = field.type
-        if field_type == "string":
-            json_type: dict = {"type": "string"}
-        elif field_type == "number":
-            json_type = {"type": "number"}
-        elif field_type == "integer":
-            json_type = {"type": "integer"}
-        elif field_type == "boolean":
-            json_type = {"type": "boolean"}
-        elif field_type == "enum":
-            values = (
-                [v.strip() for v in field.enum_values.split(",")]
-                if field.enum_values
-                else []
-            )
-            json_type = {"type": "string", "enum": values}
-        elif field_type == "list[string]":
-            json_type = {"type": "array", "items": {"type": "string"}}
-        elif field_type == "list[number]":
-            json_type = {"type": "array", "items": {"type": "number"}}
-        elif field_type == "object":
-            json_type = {"type": "object", "additionalProperties": False}
-        elif field_type == "list[object]":
-            json_type = {"type": "array", "items": {"type": "object", "additionalProperties": False}}
-        else:
-            json_type = {"type": "string"}
-
-        desc_parts = []
-        if field.description:
-            desc_parts.append(field.description)
-        if field.validation_hint:
-            desc_parts.append(f"Hint: {field.validation_hint}")
-        if field.default_value:
-            desc_parts.append(f"Default: {field.default_value}")
-        if desc_parts:
-            json_type["description"] = " | ".join(desc_parts)
-        if field.example:
-            try:
-                json_type["example"] = json.loads(field.example)
-            except (json.JSONDecodeError, TypeError):
-                json_type["example"] = field.example
-
-        properties[field.name] = json_type
+        properties[field.name] = _build_field_schema(
+            type_=field.type,
+            description=field.description,
+            enum_values=field.enum_values,
+            validation_hint=field.validation_hint,
+            example=field.example,
+            default_value=field.default_value,
+            properties=field.properties,
+            required=field.required,
+        )
         if field.required:
             required.append(field.name)
 
@@ -118,6 +168,8 @@ def generate_preset_draft(provider: Provider, prompt: str) -> dict:
         "- The user_prompt_template MUST reference user input using {{input}}.\n"
         "- schema_fields define the output JSON structure. Choose appropriate types.\n"
         "- Supported field types: string, number, integer, boolean, enum, list[string], list[number], object, list[object].\n"
+        "- For object and list[object] fields, provide nested field definitions in the properties field as a JSON array string.\n"
+        "- The properties field follows the same shape as schema_fields and can be nested arbitrarily deep.\n"
         "- For enum fields, provide comma-separated values in enum_values.\n"
         "- Make the preset practical and immediately usable.\n\n"
         "Respond with a valid JSON object matching this schema:\n"
@@ -172,6 +224,7 @@ def call_llm(
     input_text: str,
     schema_fields: List[SchemaField],
     overrides: Optional[dict] = None,
+    images: Optional[List[str]] = None,
 ) -> dict:
     overrides = overrides or {}
 
@@ -196,10 +249,19 @@ def call_llm(
         f"Do not include any other text, only the JSON object."
     )
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
-    ]
+    if images:
+        content: List[dict] = [{"type": "text", "text": user_prompt}]
+        for img_url in images:
+            content.append({"type": "image_url", "image_url": {"url": img_url}})
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": content},
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
 
     kwargs: dict = {
         "model": model,
