@@ -442,12 +442,12 @@ export default function PresetEditor() {
 							className="h-8 border-0 text-lg font-bold shadow-none focus-visible:ring-0 px-0"
 							placeholder="Preset name"
 						/>
-						<Pencil className="h-4 w-4 text-slate-400" />
+						<Pencil className="h-4 w-4 text-muted-foreground" />
 					</div>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					{isNew && (
-						<div className="flex items-center rounded-md border bg-slate-50 p-0.5">
+						<div className="flex items-center rounded-md border bg-muted p-0.5">
 							<Button
 								variant={aiMode ? "default" : "ghost"}
 								size="sm"
@@ -461,7 +461,7 @@ export default function PresetEditor() {
 								variant={!aiMode ? "default" : "ghost"}
 								size="sm"
 								onClick={() => setAiMode(false)}
-								className={`gap-1.5 ${!aiMode ? "bg-slate-700 hover:bg-slate-800" : ""}`}
+								className={`gap-1.5 ${!aiMode ? "bg-secondary text-secondary-foreground hover:bg-secondary/80" : ""}`}
 							>
 								<Pencil className="h-3.5 w-3.5" />
 								Manual
@@ -505,10 +505,10 @@ export default function PresetEditor() {
 									<div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
 										<Wand2 className="h-6 w-6 text-blue-600" />
 									</div>
-									<h2 className="text-xl font-semibold text-slate-900">
+									<h2 className="text-xl font-semibold text-foreground">
 										AI Preset Generator
 									</h2>
-									<p className="text-sm text-slate-500">
+									<p className="text-sm text-muted-foreground">
 										Describe what you want and AI will generate the preset for
 										you.
 									</p>
@@ -564,7 +564,7 @@ export default function PresetEditor() {
 						<div className="lg:col-span-2 space-y-6">
 							{/* Details */}
 							<div className="rounded-lg border p-5">
-								<h3 className="mb-4 text-sm font-semibold text-slate-900">
+								<h3 className="mb-4 text-sm font-semibold text-foreground">
 									Details
 								</h3>
 								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -591,7 +591,7 @@ export default function PresetEditor() {
 
 							{/* Prompts */}
 							<div className="rounded-lg border p-5">
-								<h3 className="mb-4 text-sm font-semibold text-slate-900">
+								<h3 className="mb-4 text-sm font-semibold text-foreground">
 									Prompts
 								</h3>
 								<div className="space-y-4">
@@ -616,7 +616,7 @@ export default function PresetEditor() {
 											placeholder="Analyze the following: {{input}}"
 											rows={4}
 										/>
-										<p className="mt-1 text-xs text-slate-500">
+										<p className="mt-1 text-xs text-muted-foreground">
 											Use {"{{input}}"} to insert the user input at runtime.
 										</p>
 									</div>
@@ -625,7 +625,7 @@ export default function PresetEditor() {
 
 							{/* Parameters */}
 							<div className="rounded-lg border p-5">
-								<h3 className="mb-4 text-sm font-semibold text-slate-900">
+								<h3 className="mb-4 text-sm font-semibold text-foreground">
 									Default Settings
 								</h3>
 								<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -729,7 +729,7 @@ export default function PresetEditor() {
 
 						{/* Quick Test */}
 						<div className="rounded-lg border p-5">
-							<h3 className="mb-4 text-sm font-semibold text-slate-900">
+							<h3 className="mb-4 text-sm font-semibold text-foreground">
 								Quick Test
 							</h3>
 							<Textarea
@@ -760,7 +760,7 @@ export default function PresetEditor() {
 						{/* Fields list */}
 						<div className="rounded-lg border p-4">
 							<div className="mb-3 flex items-center justify-between">
-								<h3 className="text-sm font-semibold text-slate-900">Fields</h3>
+								<h3 className="text-sm font-semibold text-foreground">Fields</h3>
 								<Button
 									size="sm"
 									variant="outline"
@@ -778,12 +778,12 @@ export default function PresetEditor() {
 										className={`flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${
 											selectedFieldId === field.id
 												? "bg-blue-50 text-blue-700"
-												: "hover:bg-slate-50 text-slate-700"
+												: "hover:bg-muted text-foreground"
 										}`}
 									>
 										<div className="flex items-center gap-2">
 											<span className="font-medium">{field.name}</span>
-											<span className="text-xs text-slate-500">
+											<span className="text-xs text-muted-foreground">
 												{field.type}
 											</span>
 											{(field.type === "object" || field.type === "list[object]") &&
@@ -802,7 +802,7 @@ export default function PresetEditor() {
 													e.stopPropagation();
 													moveField(idx, -1);
 												}}
-												className="rounded p-0.5 hover:bg-slate-200 disabled:opacity-30"
+												className="rounded p-0.5 hover:bg-accent disabled:opacity-30"
 												disabled={idx === 0}
 											>
 												<ChevronDown className="h-3 w-3 rotate-180" />
@@ -812,7 +812,7 @@ export default function PresetEditor() {
 													e.stopPropagation();
 													moveField(idx, 1);
 												}}
-												className="rounded p-0.5 hover:bg-slate-200 disabled:opacity-30"
+												className="rounded p-0.5 hover:bg-accent disabled:opacity-30"
 												disabled={
 													idx === (preset.schema_fields || []).length - 1
 												}
@@ -823,7 +823,7 @@ export default function PresetEditor() {
 									</div>
 								))}
 								{(preset.schema_fields || []).length === 0 && (
-									<div className="py-8 text-center text-sm text-slate-500">
+									<div className="py-8 text-center text-sm text-muted-foreground">
 										No fields yet. Click "Add Field" to start.
 									</div>
 								)}
@@ -832,7 +832,7 @@ export default function PresetEditor() {
 
 						{/* Field details */}
 						<div className="rounded-lg border p-4">
-							<h3 className="mb-4 text-sm font-semibold text-slate-900">
+							<h3 className="mb-4 text-sm font-semibold text-foreground">
 								Field Details
 							</h3>
 							{selectedFieldId != null ? (
@@ -974,7 +974,7 @@ export default function PresetEditor() {
 									</div>
 								</div>
 							) : (
-								<div className="py-8 text-center text-sm text-slate-500">
+								<div className="py-8 text-center text-sm text-muted-foreground">
 									Select a field to edit its details.
 								</div>
 							)}
@@ -982,10 +982,10 @@ export default function PresetEditor() {
 
 						{/* Schema preview */}
 						<div className="rounded-lg border p-4">
-							<h3 className="mb-4 text-sm font-semibold text-slate-900">
+							<h3 className="mb-4 text-sm font-semibold text-foreground">
 								Schema Preview
 							</h3>
-							<pre className="rounded-md bg-slate-900 p-4 text-xs text-green-400 overflow-auto max-h-[600px]">
+							<pre className="rounded-md bg-muted/50 text-foreground border-border">
 								{JSON.stringify(jsonSchema, null, 2)}
 							</pre>
 						</div>
@@ -997,7 +997,7 @@ export default function PresetEditor() {
 						{/* Input panel */}
 						<div className="space-y-4">
 							<div className="rounded-lg border p-5">
-								<h3 className="mb-3 text-sm font-semibold text-slate-900">
+								<h3 className="mb-3 text-sm font-semibold text-foreground">
 									Input
 								</h3>
 								<Textarea
@@ -1085,16 +1085,16 @@ export default function PresetEditor() {
 							</div>
 
 							<div className="rounded-lg border p-5">
-								<h3 className="mb-3 text-sm font-semibold text-slate-900">
+								<h3 className="mb-3 text-sm font-semibold text-foreground">
 									Run Settings
 								</h3>
 								<div className="space-y-3">
 									<div>
 										<Label className="mb-1 block text-xs">Provider</Label>
-										<p className="text-sm text-slate-700">
+										<p className="text-sm text-foreground">
 											{providers.find((p) => p.active)?.name || "None"}
 										</p>
-										<p className="mt-1 text-xs text-slate-500">
+										<p className="mt-1 text-xs text-muted-foreground">
 											Uses the currently active provider.
 										</p>
 									</div>
@@ -1122,7 +1122,7 @@ export default function PresetEditor() {
 											}
 											rows={4}
 										/>
-										<p className="mt-1 text-xs text-slate-500">
+										<p className="mt-1 text-xs text-muted-foreground">
 											Use {"{{input}}"} to insert the user input at runtime.
 										</p>
 									</div>
@@ -1134,7 +1134,7 @@ export default function PresetEditor() {
 						<div className="space-y-4">
 							<div className="rounded-lg border p-5">
 								<div className="mb-3 flex items-center justify-between">
-									<h3 className="text-sm font-semibold text-slate-900">
+									<h3 className="text-sm font-semibold text-foreground">
 										Result
 									</h3>
 									<div className="flex gap-1">
@@ -1172,15 +1172,15 @@ export default function PresetEditor() {
 																const parsed = JSON.parse(output);
                                                                 if (typeof parsed === "string") {
                                                                     return (
-                                                                        <div className="rounded-md border bg-white p-4 shadow-sm">
+                                                                        <div className="rounded-md border bg-card p-4 shadow-sm">
                                                                             <div className="flex items-center justify-between mb-2">
-                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                                                     Value
                                                                                 </span>
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="sm"
-                                                                                    className="h-7 gap-1 text-slate-500"
+                                                                                    className="h-7 gap-1 text-muted-foreground"
                                                                                     onClick={() =>
                                                                                         copyToClipboardRich(
                                                                                             parsed,
@@ -1193,7 +1193,7 @@ export default function PresetEditor() {
                                                                                 </Button>
                                                                             </div>
                                                                             <div
-                                                                                className="markdown-body text-sm text-slate-800"
+                                                                                className="markdown-body text-sm text-foreground"
                                                                                 dangerouslySetInnerHTML={{
                                                                                     __html: renderMarkdownToHtml(parsed),
                                                                                 }}
@@ -1206,15 +1206,15 @@ export default function PresetEditor() {
                                                                     parsed === null
                                                                 ) {
                                                                     return (
-                                                                        <div className="rounded-md border bg-slate-50 p-4">
+                                                                        <div className="rounded-md border bg-muted p-4">
                                                                             <div className="flex items-center justify-between mb-2">
-                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                                                     Value
                                                                                 </span>
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="sm"
-                                                                                    className="h-7 gap-1 text-slate-500"
+                                                                                    className="h-7 gap-1 text-muted-foreground"
                                                                                     onClick={() =>
                                                                                         copyToClipboard(output).then(() =>
                                                                                             toast.success("Copied"),
@@ -1225,7 +1225,7 @@ export default function PresetEditor() {
                                                                                     Copy
                                                                                 </Button>
                                                                             </div>
-                                                                            <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                                                            <pre className="whitespace-pre-wrap text-sm text-foreground">
                                                                                 {JSON.stringify(parsed, null, 2)}
                                                                             </pre>
                                                                         </div>
@@ -1233,15 +1233,15 @@ export default function PresetEditor() {
                                                                 }
                                                                 if (Array.isArray(parsed)) {
                                                                     return (
-                                                                        <div className="rounded-md border bg-slate-50 p-4">
+                                                                        <div className="rounded-md border bg-muted p-4">
                                                                             <div className="flex items-center justify-between mb-2">
-                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                                                     Value
                                                                                 </span>
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="sm"
-                                                                                    className="h-7 gap-1 text-slate-500"
+                                                                                    className="h-7 gap-1 text-muted-foreground"
                                                                                     onClick={() =>
                                                                                         copyToClipboard(getResultValueText(parsed)).then(() =>
                                                                                             toast.success("Copied"),
@@ -1260,16 +1260,16 @@ export default function PresetEditor() {
                                                                     ([key, value]) => (
                                                                         <div
                                                                             key={key}
-                                                                            className="rounded-md border bg-white p-4 shadow-sm"
+                                                                            className="rounded-md border bg-card p-4 shadow-sm"
                                                                         >
                                                                             <div className="flex items-center justify-between mb-2">
-                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                                                     {key}
                                                                                 </span>
                                                                                 <Button
                                                                                     variant="ghost"
                                                                                     size="sm"
-                                                                                    className="h-7 gap-1 text-slate-500"
+                                                                                    className="h-7 gap-1 text-muted-foreground"
                                                                                     onClick={() => {
                                                                                         const text = getResultValueText(value);
                                                                                         const promise =
@@ -1296,15 +1296,15 @@ export default function PresetEditor() {
                                                                 );
                                                             } catch {
                                                                 return (
-                                                                    <div className="rounded-md border bg-slate-50 p-4">
+                                                                    <div className="rounded-md border bg-muted p-4">
                                                                         <div className="flex items-center justify-between mb-2">
-                                                                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                                                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                                                                 Value
                                                                             </span>
                                                                             <Button
                                                                                 variant="ghost"
                                                                                 size="sm"
-                                                                                className="h-7 gap-1 text-slate-500"
+                                                                                className="h-7 gap-1 text-muted-foreground"
                                                                                 onClick={() =>
                                                                                     copyToClipboardRich(
                                                                                         output,
@@ -1317,7 +1317,7 @@ export default function PresetEditor() {
                                                                             </Button>
                                                                         </div>
                                                                         <div
-                                                                            className="markdown-body text-sm text-slate-800"
+                                                                            className="markdown-body text-sm text-foreground"
                                                                             dangerouslySetInnerHTML={{
                                                                                 __html: renderMarkdownToHtml(output),
                                                                             }}
@@ -1328,14 +1328,14 @@ export default function PresetEditor() {
                                                         })()}
                                                     </div>
                                                 ) : (
-                                                    <div className="text-slate-500">
+                                                    <div className="text-muted-foreground">
                                                         No output available.
                                                     </div>
                                                 )}
                                             </TabsContent>
                                             <TabsContent value="raw">
-                                                <div className="rounded-md border bg-slate-50 p-4">
-                                                    <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                                <div className="rounded-md border bg-muted p-4">
+                                                    <pre className="whitespace-pre-wrap text-sm text-foreground">
                                                         {runResult.raw_response ||
                                                             runResult.output ||
                                                             "No output"}
@@ -1409,7 +1409,7 @@ export default function PresetEditor() {
 
 										{/* Validation */}
 										<div className="rounded-md border p-3">
-											<div className="mb-1 text-xs font-semibold text-slate-500">
+											<div className="mb-1 text-xs font-semibold text-muted-foreground">
 												Validation
 											</div>
 											<div className="flex items-center gap-2 text-sm">
@@ -1431,23 +1431,23 @@ export default function PresetEditor() {
 
 										{/* Run Info */}
 										<div className="rounded-md border p-3">
-											<div className="mb-2 text-xs font-semibold text-slate-500">
+											<div className="mb-2 text-xs font-semibold text-muted-foreground">
 												Run Info
 											</div>
 											<div className="grid grid-cols-2 gap-2 text-xs">
-												<div className="flex items-center gap-1 text-slate-600">
+												<div className="flex items-center gap-1 text-muted-foreground">
 													<Clock className="h-3 w-3" />{" "}
 													{formatDate(runResult.created_at)}
 												</div>
-												<div className="flex items-center gap-1 text-slate-600">
+												<div className="flex items-center gap-1 text-muted-foreground">
 													<Cpu className="h-3 w-3" /> {runResult.model}
 												</div>
-												<div className="flex items-center gap-1 text-slate-600">
+												<div className="flex items-center gap-1 text-muted-foreground">
 													<Hash className="h-3 w-3" /> Tokens:{" "}
 													{(runResult.tokens_prompt || 0) +
 														(runResult.tokens_completion || 0)}
 												</div>
-												<div className="flex items-center gap-1 text-slate-600">
+												<div className="flex items-center gap-1 text-muted-foreground">
 													<Layers className="h-3 w-3" /> Duration:{" "}
 													{formatDuration(runResult.duration_ms)}
 												</div>
@@ -1455,7 +1455,7 @@ export default function PresetEditor() {
 										</div>
 									</div>
 								) : (
-									<div className="flex h-48 items-center justify-center text-sm text-slate-500">
+									<div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
 										Run the preset to see results here.
 									</div>
 								)}
@@ -1466,7 +1466,7 @@ export default function PresetEditor() {
 
 				{activeTab === "history" && (
 					<div>
-						<h3 className="mb-4 text-lg font-semibold text-slate-900">
+						<h3 className="mb-4 text-lg font-semibold text-foreground">
 							Run History
 						</h3>
 						{runsLoading ? (
@@ -1474,33 +1474,33 @@ export default function PresetEditor() {
 								<Loader2 className="h-8 w-8 animate-spin text-blue-600" />
 							</div>
 						) : runs.length === 0 ? (
-							<div className="flex h-64 items-center justify-center text-slate-500">
+							<div className="flex h-64 items-center justify-center text-muted-foreground">
 								No runs yet.
 							</div>
 						) : (
 							<div className="overflow-x-auto rounded-lg border">
 								<table className="w-full text-sm">
 									<thead>
-										<tr className="border-b bg-slate-50">
-											<th className="px-4 py-3 text-left font-medium text-slate-600">
+										<tr className="border-b bg-muted">
+											<th className="px-4 py-3 text-left font-medium text-muted-foreground">
 												Date
 											</th>
-											<th className="px-4 py-3 text-left font-medium text-slate-600">
+											<th className="px-4 py-3 text-left font-medium text-muted-foreground">
 												Input
 											</th>
-											<th className="px-4 py-3 text-left font-medium text-slate-600">
+											<th className="px-4 py-3 text-left font-medium text-muted-foreground">
 												Status
 											</th>
-											<th className="px-4 py-3 text-left font-medium text-slate-600">
+											<th className="px-4 py-3 text-left font-medium text-muted-foreground">
 												Model
 											</th>
-											<th className="px-4 py-3 text-left font-medium text-slate-600">
+											<th className="px-4 py-3 text-left font-medium text-muted-foreground">
 												Duration
 											</th>
-											<th className="px-4 py-3 text-left font-medium text-slate-600">
+											<th className="px-4 py-3 text-left font-medium text-muted-foreground">
 												Tokens
 											</th>
-											<th className="px-4 py-3 text-right font-medium text-slate-600">
+											<th className="px-4 py-3 text-right font-medium text-muted-foreground">
 												Actions
 											</th>
 										</tr>
@@ -1509,13 +1509,13 @@ export default function PresetEditor() {
 										{runs.map((run) => (
 											<tr
 												key={run.id}
-												className="border-b hover:bg-slate-50 cursor-pointer"
+												className="border-b hover:bg-muted cursor-pointer"
 												onClick={() => setViewRunId(run.id)}
 											>
-												<td className="px-4 py-3 whitespace-nowrap text-slate-600">
+												<td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
 													{formatDate(run.created_at)}
 												</td>
-												<td className="px-4 py-3 max-w-xs truncate text-slate-600">
+												<td className="px-4 py-3 max-w-xs truncate text-muted-foreground">
 													{run.input}
 												</td>
 												<td className="px-4 py-3">
@@ -1527,13 +1527,13 @@ export default function PresetEditor() {
 														{run.status}
 													</Badge>
 												</td>
-												<td className="px-4 py-3 text-slate-600">
+												<td className="px-4 py-3 text-muted-foreground">
 													{run.model}
 												</td>
-												<td className="px-4 py-3 text-slate-600">
+												<td className="px-4 py-3 text-muted-foreground">
 													{formatDuration(run.duration_ms)}
 												</td>
-												<td className="px-4 py-3 text-slate-600">
+												<td className="px-4 py-3 text-muted-foreground">
 													{(run.tokens_prompt || 0) +
 														(run.tokens_completion || 0)}
 												</td>

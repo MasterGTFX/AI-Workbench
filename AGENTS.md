@@ -40,6 +40,8 @@ frontend/
       Layout.tsx     # Sidebar + Outlet
       Sidebar.tsx    # Navigation, active provider card, provider switcher + model picker dialog
       SchemaNestedEditor.tsx # Editor for building nested object schemas
+      ThemeProvider.tsx     # Theme state management and persistence
+      ThemeToggle.tsx        # Dropdown for Light/Dark/System theme
     pages/
       Dashboard.tsx       # Presets list, search, filter, sort, pagination, table/card views
       PresetEditor.tsx    # Configure / Schema / Run / History tabs, AI generation, run overrides
@@ -71,7 +73,7 @@ frontend/
 
 - **Backend**: Use type hints everywhere. Return Pydantic response models from routers.
 - **Frontend**: Use TypeScript strictly. Components are default exports. Props interfaces are inline.
-- **Styling**: Tailwind utility classes. Colors use CSS variables from `index.css` (shadcn color system).
+- **Styling**: Tailwind utility classes. Colors use CSS variables from `index.css` (shadcn color system) with full dark mode support.
 - **Icons**: Lucide React only.
 - **API calls**: Always go through `apiClient` in `src/api/client.ts`.
 

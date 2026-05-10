@@ -8,44 +8,48 @@ const DropdownMenuContext = React.createContext<{
 
 function DropdownMenu({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [open]);
+
   return (
     <DropdownMenuContext.Provider value={{ open, setOpen }}>
-      {children}
+      <div ref={containerRef} className="relative inline-block text-left">
+        {children}
+      </div>
     </DropdownMenuContext.Provider>
   );
 }
 
 function DropdownMenuTrigger({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) {
   const ctx = React.useContext(DropdownMenuContext);
-  const ref = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        ctx.setOpen(false);
-      }
-    }
-    if (ctx.open) {
-      document.addEventListener("mousedown", handleClick);
-      return () => document.removeEventListener("mousedown", handleClick);
-    }
-  }, [ctx.open]);
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    ctx.setOpen(!ctx.open);
+  };
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement, {
+      onClick: handleClick,
+    });
+  }
 
   return (
-    <div ref={ref} className="inline-block">
-      {asChild && React.isValidElement(children) ? (
-        React.cloneElement(children as React.ReactElement, {
-          onClick: (e: React.MouseEvent) => {
-            e.stopPropagation();
-            ctx.setOpen(!ctx.open);
-          },
-        })
-      ) : (
-        <button type="button" onClick={() => ctx.setOpen(!ctx.open)}>
-          {children}
-        </button>
-      )}
-    </div>
+    <button type="button" onClick={handleClick}>
+      {children}
+    </button>
   );
 }
 
@@ -75,7 +79,8 @@ function DropdownMenuItem({ className, children, onClick }: { className?: string
         "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
         className
       )}
-      onClick={() => {
+      onClick={(e) => {
+        e.stopPropagation();
         onClick?.();
         ctx.setOpen(false);
       }}

@@ -26,6 +26,7 @@ import { apiClient } from "@/api/client";
 import { Provider, ModelItem } from "@/types";
 import { cn } from "@/utils/cn";
 import toast from "react-hot-toast";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { to: "/", label: "Presets", icon: LayoutDashboard },
@@ -118,32 +119,37 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       )}
       <aside
         className={cn(
-          "flex h-screen flex-col border-r bg-[#f8fafc] z-50",
+          "flex h-screen flex-col border-r bg-muted/30 z-50",
           "fixed left-0 top-0 w-64 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-              <Cpu className="h-5 w-5 text-white" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <Cpu className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-slate-900">AI Presets</span>
+            <span className="text-lg font-bold text-foreground">AI Presets</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="md:hidden"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="md:hidden"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
       <div className="px-4 pb-2">
         <Button
           onClick={() => navigate("/presets/new")}
-          className="w-full justify-start gap-2 bg-blue-600 hover:bg-blue-700"
+          className="w-full justify-start gap-2"
         >
           <Plus className="h-4 w-4" />
           New Preset
@@ -160,8 +166,8 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
               cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )
             }
           >
@@ -174,27 +180,27 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
       <div className="border-t p-4">
         <button
           onClick={() => setDialogOpen(true)}
-          className="w-full rounded-lg border bg-white p-3 shadow-sm text-left hover:bg-slate-50 transition-colors"
+          className="w-full rounded-lg border bg-card p-3 shadow-sm text-left hover:bg-accent transition-colors"
         >
-          <div className="text-xs font-medium text-slate-500 mb-1">
+          <div className="text-xs font-medium text-muted-foreground mb-1">
             Active Provider
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-sm font-semibold text-slate-900">
+              <span className="text-sm font-semibold text-foreground">
                 {activeProvider?.name || "None"}
               </span>
             </div>
-            <ChevronRight className="h-4 w-4 text-slate-400" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
           {activeProvider?.default_model && (
-            <div className="mt-1 truncate text-xs text-slate-600 font-medium">
+            <div className="mt-1 truncate text-xs text-muted-foreground font-medium">
               {activeProvider.default_model}
             </div>
           )}
           {activeProvider?.base_url && (
-            <div className="mt-1 truncate text-xs text-slate-500">
+            <div className="mt-1 truncate text-xs text-muted-foreground/70">
               {activeProvider.base_url}
             </div>
           )}
@@ -220,8 +226,8 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                     className={cn(
                       "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors",
                       p.id === activeProvider?.id
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-slate-700 hover:bg-slate-100"
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-muted"
                     )}
                   >
                     <span className="font-medium">{p.name}</span>
@@ -231,7 +237,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                   </button>
                 ))}
                 {providers.length === 0 && (
-                  <p className="px-2 py-1.5 text-sm text-slate-500">
+                  <p className="px-2 py-1.5 text-sm text-muted-foreground">
                     No providers configured.
                   </p>
                 )}
@@ -245,7 +251,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                 placeholder="Type or pick a model..."
               />
               {modelsLoading ? (
-                <div className="flex items-center gap-2 py-2 text-xs text-slate-500">
+                <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Loading models...
                 </div>
@@ -260,10 +266,10 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                         key={m.id}
                         onClick={() => setModelValue(m.id)}
                         className={cn(
-                          "flex w-full items-center justify-between px-2 py-1.5 text-sm transition-colors hover:bg-slate-100",
+                          "flex w-full items-center justify-between px-2 py-1.5 text-sm transition-colors hover:bg-muted",
                           modelValue === m.id
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-slate-700"
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground"
                         )}
                       >
                         <span className="truncate">{m.id}</span>
@@ -275,13 +281,13 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
                   {models.filter((m) =>
                     m.id.toLowerCase().includes(modelValue.toLowerCase())
                   ).length === 0 && (
-                    <p className="px-2 py-1.5 text-xs text-slate-500">
+                    <p className="px-2 py-1.5 text-xs text-muted-foreground">
                       No matches. "{modelValue}" will be used as a custom model.
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted-foreground">
                   No models loaded. Type a custom model name above.
                 </p>
               )}

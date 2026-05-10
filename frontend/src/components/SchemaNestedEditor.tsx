@@ -201,27 +201,27 @@ export default function SchemaNestedEditor({
 
 	return (
 		<div
-			className={`space-y-2 ${depth > 0 ? "mt-3 pl-3 border-l-2 border-slate-200" : ""}`}
+			className={`space-y-2 ${depth > 0 ? "mt-3 pl-3 border-l-2 border-border" : ""}`}
 		>
 			<div className="space-y-1">
 				{fields.map((field, idx) => (
-					<div key={idx} className="rounded-md border bg-white">
+					<div key={idx} className="rounded-md border bg-card">
 						<div
-							className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-slate-50"
+							className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted"
 							onClick={() =>
 								setExpandedIdx(expandedIdx === idx ? null : idx)
 							}
 						>
 							<div className="flex items-center gap-2 min-w-0">
 								{expandedIdx === idx ? (
-									<ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+									<ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
 								) : (
-									<ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+									<ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
 								)}
 								<span className="text-sm font-medium truncate">
 									{field.name || "(unnamed)"}
 								</span>
-								<span className="text-xs text-slate-500 shrink-0">
+								<span className="text-xs text-muted-foreground shrink-0">
 									{field.type}
 								</span>
 								{field.required && (
@@ -267,7 +267,7 @@ export default function SchemaNestedEditor({
 			)}
 
 			{expandedIdx === "new" && (
-				<div className="rounded-md border bg-white px-3 py-3">
+				<div className="rounded-md border bg-card px-3 py-3">
 					{renderForm()}
 				</div>
 			)}

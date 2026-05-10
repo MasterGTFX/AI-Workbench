@@ -10,6 +10,7 @@ It provides a clean interface for:
 - Saving run history
 - Testing prompts quickly
 - Generating presets with AI
+- **Dark Mode Support** (Light, Dark, and System preference)
 
 The goal is to make repetitive AI workflows reusable, predictable, and easy to iterate on.
 
@@ -40,6 +41,10 @@ Describe what you want in plain language and the app generates a complete preset
 - Name, description, and tags
 - System and user prompts (with `{{input}}` placeholder)
 - Structured output schema with appropriate field types
+
+### Import / Export
+
+Export all your presets as a JSON file and import them back to any instance. The system automatically de-duplicates presets by name and is backward compatible, gracefully handling missing optional parameters or extra fields.
 
 ### Structured Output Schema Builder
 
@@ -215,7 +220,9 @@ ai-workbench/
 │   │   │   │   └── tooltip.tsx
 │   │   │   ├── Layout.tsx
 │   │   │   ├── SchemaNestedEditor.tsx
-│   │   │   └── Sidebar.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── ThemeProvider.tsx
+│   │   │   └── ThemeToggle.tsx
 │   │   ├── pages/
 │   │   │   ├── Dashboard.tsx
 │   │   │   ├── PresetEditor.tsx
@@ -375,6 +382,8 @@ DELETE /api/presets/{id}/
 POST   /api/presets/{id}/duplicate/
 POST   /api/presets/generate/
 POST   /api/presets/{id}/run/
+GET    /api/presets/export/
+POST   /api/presets/import/
 ```
 
 ### Runs

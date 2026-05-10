@@ -79,6 +79,15 @@ def get_preset(session: Session, preset_id: int) -> Optional[Preset]:
     return session.exec(statement).first()
 
 
+def get_preset_by_name(session: Session, name: str) -> Optional[Preset]:
+    statement = (
+        select(Preset)
+        .where(Preset.name == name)
+        .options(selectinload(Preset.schema_fields))
+    )
+    return session.exec(statement).first()
+
+
 def create_preset(session: Session, preset: PresetCreate) -> Preset:
     schema_fields_data = preset.schema_fields
     preset_data = preset.model_dump(exclude={"schema_fields"})
@@ -116,6 +125,11 @@ def update_preset(session: Session, db_preset: Preset, preset: PresetUpdate) -> 
 
 
 def delete_preset(session: Session, db_preset: Preset) -> None:
+    # Delete associated runs first to avoid foreign key constraints
+    runs = session.exec(select(Run).where(Run.preset_id == db_preset.id)).all()
+    for run in runs:
+        session.delete(run)
+    
     session.delete(db_preset)
     session.commit()
 

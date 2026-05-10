@@ -149,7 +149,7 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Presets</h1>
+        <h1 className="text-2xl font-bold text-foreground">Presets</h1>
         <div className="flex items-center gap-2">
           <Button
             variant={view === "table" ? "default" : "outline"}
@@ -170,7 +170,7 @@ export default function Dashboard() {
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search presets..."
             value={search}
@@ -215,7 +215,7 @@ export default function Dashboard() {
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex h-64 items-center justify-center text-slate-500">
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
           No presets found.
         </div>
       ) : view === "table" ? (
@@ -238,7 +238,7 @@ export default function Dashboard() {
                   onClick={() => navigate(`/presets/${preset.id}?tab=run`)}
                 >
                   <TableCell className="font-medium">{preset.name}</TableCell>
-                  <TableCell className="max-w-xs truncate text-slate-600">
+                  <TableCell className="max-w-xs truncate text-muted-foreground">
                     {preset.description || "—"}
                   </TableCell>
                   <TableCell>
@@ -254,11 +254,11 @@ export default function Dashboard() {
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {formatDate(preset.updated_at)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="icon"
                         variant="ghost"
@@ -287,7 +287,7 @@ export default function Dashboard() {
                           handleDuplicate(preset.id);
                         }}
                       >
-                        <Copy className="h-4 w-4 text-slate-600" />
+                        <Copy className="h-4 w-4 text-muted-foreground" />
                       </Button>
                       <Dialog
                         open={deleteId === preset.id}
@@ -340,11 +340,11 @@ export default function Dashboard() {
           {paged.map((preset) => (
             <div
               key={preset.id}
-              className="rounded-lg border bg-white p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer"
+              className="rounded-lg border bg-card p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer"
               onClick={() => navigate(`/presets/${preset.id}?tab=run`)}
             >
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-900">{preset.name}</h3>
+                <h3 className="font-semibold text-foreground">{preset.name}</h3>
                 <div className="flex gap-1">
                   <Button
                     size="icon"
@@ -370,7 +370,7 @@ export default function Dashboard() {
                   </Button>
                 </div>
               </div>
-              <p className="mb-3 text-sm text-slate-600 line-clamp-2">
+              <p className="mb-3 text-sm text-muted-foreground line-clamp-2">
                 {preset.description || "No description"}
               </p>
               <div className="mb-3 flex flex-wrap gap-1">
@@ -380,7 +380,7 @@ export default function Dashboard() {
                   </Badge>
                 ))}
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{formatDate(preset.updated_at)}</span>
               </div>
             </div>
@@ -390,7 +390,7 @@ export default function Dashboard() {
 
       {filtered.length > 0 && (
         <div className="mt-6 flex items-center justify-between">
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-muted-foreground">
             {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
           </span>
           <div className="flex items-center gap-2">

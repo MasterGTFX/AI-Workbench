@@ -73,6 +73,24 @@ def generate_preset(
     )
 
 
+@router.get("/export/", response_model=List[schemas.PresetResponse])
+def export_presets(session: Session = Depends(get_session)):
+    return crud.get_presets(session)
+
+
+@router.post("/import/", response_model=List[schemas.PresetResponse])
+def import_presets(
+    presets: List[schemas.PresetCreate], session: Session = Depends(get_session)
+):
+    imported_presets = []
+    for preset_data in presets:
+        existing = crud.get_preset_by_name(session, preset_data.name)
+        if not existing:
+            new_preset = crud.create_preset(session, preset_data)
+            imported_presets.append(new_preset)
+    return imported_presets
+
+
 @router.get("/", response_model=List[schemas.PresetResponse])
 def read_presets(session: Session = Depends(get_session)):
     return crud.get_presets(session)

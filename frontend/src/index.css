@@ -27,6 +27,28 @@
   }
 }
 
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 48%;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -53,7 +75,7 @@
   .markdown-body h2,
   .markdown-body h3,
   .markdown-body h4 {
-    @apply font-semibold text-slate-900 mb-2 mt-3 first:mt-0;
+    @apply font-semibold text-foreground mb-2 mt-3 first:mt-0;
   }
   .markdown-body h1 {
     @apply text-lg;
@@ -79,21 +101,21 @@
     @apply text-sm;
   }
   .markdown-body code {
-    @apply bg-slate-100 text-rose-600 px-1 py-0.5 rounded text-xs font-mono;
+    @apply bg-muted text-rose-600 dark:text-rose-400 px-1 py-0.5 rounded text-xs font-mono;
   }
   .markdown-body pre {
-    @apply bg-slate-100 p-3 rounded-md overflow-auto text-xs font-mono mb-2;
+    @apply bg-muted p-3 rounded-md overflow-auto text-xs font-mono mb-2;
   }
   .markdown-body pre code {
-    @apply bg-transparent text-slate-800 p-0 rounded-none;
+    @apply bg-transparent text-foreground p-0 rounded-none;
   }
   .markdown-body blockquote {
-    @apply border-l-2 border-slate-300 pl-3 italic text-slate-600 mb-2;
+    @apply border-l-2 border-muted-foreground/30 pl-3 italic text-muted-foreground mb-2;
   }
   .markdown-body a {
-    @apply text-blue-600 underline;
+    @apply text-primary underline;
   }
   .markdown-body hr {
-    @apply my-3 border-slate-200;
+    @apply my-3 border-border;
   }
 }

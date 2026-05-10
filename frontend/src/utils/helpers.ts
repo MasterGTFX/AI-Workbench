@@ -27,20 +27,20 @@ export function parseTags(tags: string): string[] {
 
 export function tagColor(tag: string): string {
   const colors: Record<string, string> = {
-    bugs: "bg-blue-100 text-blue-700 border-blue-200",
-    bug: "bg-blue-100 text-blue-700 border-blue-200",
-    email: "bg-purple-100 text-purple-700 border-purple-200",
-    spec: "bg-orange-100 text-orange-700 border-orange-200",
-    docs: "bg-green-100 text-green-700 border-green-200",
-    feature: "bg-pink-100 text-pink-700 border-pink-200",
-    test: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    review: "bg-indigo-100 text-indigo-700 border-indigo-200",
-    data: "bg-cyan-100 text-cyan-700 border-cyan-200",
-    support: "bg-teal-100 text-teal-700 border-teal-200",
+    bugs: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+    bug: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+    email: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
+    spec: "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800",
+    docs: "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+    feature: "bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800",
+    test: "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800",
+    review: "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800",
+    data: "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-800",
+    support: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-800",
   };
   const lower = tag.toLowerCase();
   return (
-    colors[lower] || "bg-gray-100 text-gray-700 border-gray-200"
+    colors[lower] || "bg-muted text-muted-foreground border-border"
   );
 }
 

@@ -91,13 +91,13 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative z-50 flex w-full max-w-2xl flex-col bg-white shadow-xl">
+      <div className="relative z-50 flex w-full max-w-2xl flex-col bg-card shadow-xl">
         <div className="flex items-center justify-between border-b px-4 py-4 md:px-6">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Run Details
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {run?.preset?.name || "Preset"}
             </p>
           </div>
@@ -111,31 +111,31 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
         ) : !run ? (
-          <div className="flex flex-1 items-center justify-center text-slate-500">
+          <div className="flex flex-1 items-center justify-center text-muted-foreground">
             Run not found.
           </div>
         ) : (
           <>
-            <div className="border-b bg-slate-50 px-4 py-4 md:px-6">
+            <div className="border-b bg-muted px-4 py-4 md:px-6">
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" /> Date
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     {formatDate(run.created_at)}
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Cpu className="h-3 w-3" /> Model
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     {run.model}
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     Status
                   </div>
                   <Badge
@@ -145,42 +145,42 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                   </Badge>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     Duration
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     {formatDuration(run.duration_ms)}
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Hash className="h-3 w-3" /> Tokens
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     {(run.tokens_prompt || 0) + (run.tokens_completion || 0)}
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Thermometer className="h-3 w-3" /> Temperature
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     —
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Layers className="h-3 w-3" /> Max Tokens
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     —
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     Top P
                   </div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-foreground">
                     —
                   </div>
                 </div>
@@ -199,8 +199,8 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                 </div>
 
                 <TabsContent value="input">
-                  <div className="rounded-md border bg-slate-50 p-4">
-                    <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                  <div className="rounded-md border bg-muted p-4">
+                    <pre className="whitespace-pre-wrap text-sm text-foreground">
                       {run.input}
                     </pre>
                   </div>
@@ -216,15 +216,15 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                           const parsed = JSON.parse(output);
                           if (typeof parsed === "string") {
                             return (
-                              <div className="rounded-md border bg-white p-4 shadow-sm">
+                              <div className="rounded-md border bg-card p-4 shadow-sm">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Value
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 gap-1 text-slate-500"
+                                    className="h-7 gap-1 text-muted-foreground"
                                     onClick={() =>
                                       copyToClipboardRich(
                                         parsed,
@@ -237,7 +237,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                   </Button>
                                 </div>
                                 <div
-                                  className="markdown-body text-sm text-slate-800"
+                                  className="markdown-body text-sm text-foreground"
                                   dangerouslySetInnerHTML={{
                                     __html: renderMarkdownToHtml(parsed),
                                   }}
@@ -247,15 +247,15 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                           }
                           if (typeof parsed !== "object" || parsed === null) {
                             return (
-                              <div className="rounded-md border bg-slate-50 p-4">
+                              <div className="rounded-md border bg-muted p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Value
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 gap-1 text-slate-500"
+                                    className="h-7 gap-1 text-muted-foreground"
                                     onClick={() =>
                                       copyToClipboard(output).then(() =>
                                         toast.success("Copied")
@@ -266,7 +266,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                     Copy
                                   </Button>
                                 </div>
-                                <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                                <pre className="whitespace-pre-wrap text-sm text-foreground">
                                   {JSON.stringify(parsed, null, 2)}
                                 </pre>
                               </div>
@@ -274,15 +274,15 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                           }
                           if (Array.isArray(parsed)) {
                             return (
-                              <div className="rounded-md border bg-slate-50 p-4">
+                              <div className="rounded-md border bg-muted p-4">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                     Value
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 gap-1 text-slate-500"
+                                    className="h-7 gap-1 text-muted-foreground"
                                     onClick={() =>
                                       copyToClipboard(getResultValueText(parsed)).then(() =>
                                         toast.success("Copied")
@@ -300,16 +300,16 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                           return Object.entries(parsed).map(([key, value]) => (
                             <div
                               key={key}
-                              className="rounded-md border bg-white p-4 shadow-sm"
+                              className="rounded-md border bg-card p-4 shadow-sm"
                             >
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                   {key}
                                 </span>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 gap-1 text-slate-500"
+                                  className="h-7 gap-1 text-muted-foreground"
                                   onClick={() => {
                                     const text = getResultValueText(value);
                                     const promise =
@@ -335,15 +335,15 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                           ));
                         } catch {
                           return (
-                            <div className="rounded-md border bg-slate-50 p-4">
+                            <div className="rounded-md border bg-muted p-4">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                   Value
                                 </span>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 gap-1 text-slate-500"
+                                  className="h-7 gap-1 text-muted-foreground"
                                   onClick={() =>
                                     copyToClipboardRich(
                                       output,
@@ -356,7 +356,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                                 </Button>
                               </div>
                               <div
-                                className="markdown-body text-sm text-slate-800"
+                                className="markdown-body text-sm text-foreground"
                                 dangerouslySetInnerHTML={{
                                   __html: renderMarkdownToHtml(output),
                                 }}
@@ -367,13 +367,13 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                       })()}
                     </div>
                   ) : (
-                    <div className="text-slate-500">No output available.</div>
+                    <div className="text-muted-foreground">No output available.</div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="raw">
-                  <div className="rounded-md border bg-slate-50 p-4">
-                    <pre className="whitespace-pre-wrap text-sm text-slate-800">
+                  <div className="rounded-md border bg-muted p-4">
+                    <pre className="whitespace-pre-wrap text-sm text-foreground">
                       {JSON.stringify(
                         {
                           id: run.id,
@@ -402,7 +402,7 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                       {run.error}
                     </div>
                   ) : (
-                    <div className="text-slate-500">No logs available.</div>
+                    <div className="text-muted-foreground">No logs available.</div>
                   )}
                 </TabsContent>
               </Tabs>

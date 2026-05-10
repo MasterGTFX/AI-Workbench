@@ -113,13 +113,13 @@ export default function HistoryPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">History</h1>
-        <p className="text-sm text-slate-500">View all past runs</p>
+        <h1 className="text-2xl font-bold text-foreground">History</h1>
+        <p className="text-sm text-muted-foreground">View all past runs</p>
       </div>
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search runs..."
             value={search}
@@ -166,7 +166,7 @@ export default function HistoryPage() {
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex h-64 items-center justify-center text-slate-500">
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
           No runs found.
         </div>
       ) : (
@@ -191,13 +191,13 @@ export default function HistoryPage() {
                   className="cursor-pointer"
                   onClick={() => setViewRunId(run.id)}
                 >
-                  <TableCell className="whitespace-nowrap text-slate-600">
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatDate(run.created_at)}
                   </TableCell>
                   <TableCell className="font-medium">
                     {run.preset?.name || run.preset_id}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-slate-600">
+                  <TableCell className="max-w-xs truncate text-muted-foreground">
                     {truncate(run.input, 60)}
                   </TableCell>
                   <TableCell>
@@ -207,13 +207,13 @@ export default function HistoryPage() {
                       {run.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {run.model}
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {formatDuration(run.duration_ms)}
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {(run.tokens_prompt || 0) + (run.tokens_completion || 0)}
                   </TableCell>
                   <TableCell className="text-right">
@@ -279,7 +279,7 @@ export default function HistoryPage() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-muted-foreground">
             Page {page} of {totalPages}
           </span>
           <Button

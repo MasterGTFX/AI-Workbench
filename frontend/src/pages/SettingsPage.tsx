@@ -7,6 +7,8 @@ import {
   Loader2,
   Check,
   X,
+  Download,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,12 +51,60 @@ export default function SettingsPage() {
     try {
       const res = await apiClient.get<Provider[]>("/providers");
       setProviders(res.data);
-    } catch {
+    } catch (error) {
       toast.error("Failed to load providers");
     } finally {
       setLoading(false);
     }
   }
+
+  async function handleExport() {
+    try {
+      const res = await apiClient.get("/presets/export/");
+      const data = res.data;
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `presets-export-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Presets exported successfully");
+    } catch (error) {
+      toast.error("Failed to export presets");
+    }
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        let presets = JSON.parse(event.target?.result as string);
+        if (!Array.isArray(presets)) {
+          presets = [presets];
+        }
+        const res = await apiClient.post<any[]>("/presets/import/", presets);
+        toast.success(`Imported ${res.data.length} new presets`);
+        // Reset file input
+        e.target.value = "";
+      } catch (error) {
+        toast.error(
+          "Failed to import presets. Make sure the file is valid JSON."
+        );
+      }
+    };
+    reader.readAsText(file);
+  }
+
 
   function openAdd() {
     setForm(emptyForm);
@@ -103,8 +153,8 @@ export default function SettingsPage() {
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500">Manage app configuration</p>
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage app configuration</p>
       </div>
 
       <Tabs defaultValue="providers">
@@ -120,7 +170,7 @@ export default function SettingsPage() {
 
         <TabsContent value="providers">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Providers</h2>
+            <h2 className="text-lg font-semibold text-foreground">Providers</h2>
             <Button onClick={openAdd} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Provider
@@ -135,20 +185,20 @@ export default function SettingsPage() {
             <div className="overflow-x-auto rounded-lg border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b bg-slate-50">
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">
+                  <tr className="border-b bg-muted">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Name
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Base URL
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Default Model
                     </th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">
                       Active
                     </th>
-                    <th className="px-4 py-3 text-right font-medium text-slate-600">
+                    <th className="px-4 py-3 text-right font-medium text-muted-foreground">
                       Actions
                     </th>
                   </tr>
@@ -157,15 +207,15 @@ export default function SettingsPage() {
                   {providers.map((p) => (
                     <tr
                       key={p.id}
-                      className="border-b transition-colors hover:bg-slate-50"
+                      className="border-b transition-colors hover:bg-muted"
                     >
-                      <td className="px-4 py-3 font-medium text-slate-900">
+                      <td className="px-4 py-3 font-medium text-foreground">
                         {p.name}
                       </td>
-                      <td className="px-4 py-3 text-slate-600">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {p.base_url}
                       </td>
-                      <td className="px-4 py-3 text-slate-600">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {p.default_model || "—"}
                       </td>
                       <td className="px-4 py-3">
@@ -174,7 +224,7 @@ export default function SettingsPage() {
                             <Check className="h-4 w-4" /> Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-slate-400">
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
                             <X className="h-4 w-4" /> Inactive
                           </span>
                         )}
@@ -203,7 +253,7 @@ export default function SettingsPage() {
                     <tr>
                       <td
                         colSpan={5}
-                        className="px-4 py-8 text-center text-slate-500"
+                        className="px-4 py-8 text-center text-muted-foreground"
                       >
                         No providers yet. Add one to get started.
                       </td>
@@ -217,29 +267,65 @@ export default function SettingsPage() {
 
         <TabsContent value="general">
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">General Settings</h2>
-            <p className="text-slate-500">General settings coming soon.</p>
+            <h2 className="text-lg font-semibold text-foreground mb-4">General Settings</h2>
+            <p className="text-muted-foreground">General settings coming soon.</p>
           </div>
         </TabsContent>
 
         <TabsContent value="apikeys">
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">API Keys</h2>
-            <p className="text-slate-500">Manage API keys in the Providers tab.</p>
+            <h2 className="text-lg font-semibold text-foreground mb-4">API Keys</h2>
+            <p className="text-muted-foreground">Manage API keys in the Providers tab.</p>
           </div>
         </TabsContent>
 
         <TabsContent value="templates">
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Templates</h2>
-            <p className="text-slate-500">Templates coming soon.</p>
+            <h2 className="text-lg font-semibold text-foreground mb-4">Templates</h2>
+            <p className="text-muted-foreground">Templates coming soon.</p>
           </div>
         </TabsContent>
 
         <TabsContent value="importexport">
           <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Import / Export</h2>
-            <p className="text-slate-500">Import and export functionality coming soon.</p>
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              Import / Export
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Export all your presets as a JSON file or import them from an
+              existing export.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative">
+                <input
+                  type="file"
+                  id="import-presets"
+                  className="hidden"
+                  accept=".json"
+                  onChange={handleImport}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    document.getElementById("import-presets")?.click()
+                  }
+                  className="w-full sm:w-auto"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Presets
+                </Button>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={handleExport}
+                className="w-full sm:w-auto"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Presets
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
