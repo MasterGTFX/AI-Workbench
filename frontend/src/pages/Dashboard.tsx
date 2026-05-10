@@ -235,7 +235,7 @@ export default function Dashboard() {
                 <TableRow
                   key={preset.id}
                   className="cursor-pointer"
-                  onClick={() => navigate(`/presets/${preset.id}?tab=configure`)}
+                  onClick={() => navigate(`/presets/${preset.id}?tab=run`)}
                 >
                   <TableCell className="font-medium">{preset.name}</TableCell>
                   <TableCell className="max-w-xs truncate text-slate-600">
@@ -341,7 +341,7 @@ export default function Dashboard() {
             <div
               key={preset.id}
               className="rounded-lg border bg-white p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer"
-              onClick={() => navigate(`/presets/${preset.id}?tab=configure`)}
+              onClick={() => navigate(`/presets/${preset.id}?tab=run`)}
             >
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="font-semibold text-slate-900">{preset.name}</h3>

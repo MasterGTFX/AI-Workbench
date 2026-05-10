@@ -186,7 +186,11 @@ export default function HistoryPage() {
             </TableHeader>
             <TableBody>
               {paged.map((run) => (
-                <TableRow key={run.id}>
+                <TableRow
+                  key={run.id}
+                  className="cursor-pointer"
+                  onClick={() => setViewRunId(run.id)}
+                >
                   <TableCell className="whitespace-nowrap text-slate-600">
                     {formatDate(run.created_at)}
                   </TableCell>
@@ -213,7 +217,7 @@ export default function HistoryPage() {
                     {(run.tokens_prompt || 0) + (run.tokens_completion || 0)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         size="icon"
                         variant="ghost"

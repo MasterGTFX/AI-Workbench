@@ -46,6 +46,7 @@ Describe what you want in plain language and the app generates a complete preset
 Visually define output fields with:
 - Field name
 - Type (`string`, `number`, `integer`, `boolean`, `enum`, `list[string]`, `list[number]`, `object`, `list[object]`)
+- Nested properties for objects
 - Required flag
 - Description
 - Enum values (comma-separated)
@@ -115,7 +116,7 @@ Run presets against text input and get:
 
 **Schema Tab**
 - Visual schema editor
-- Field type selection (including enum)
+- Field type selection (including enum and nested objects)
 - JSON Schema preview
 
 **Run Tab**
@@ -213,6 +214,7 @@ ai-workbench/
 │   │   │   │   ├── textarea.tsx
 │   │   │   │   └── tooltip.tsx
 │   │   │   ├── Layout.tsx
+│   │   │   ├── SchemaNestedEditor.tsx
 │   │   │   └── Sidebar.tsx
 │   │   ├── pages/
 │   │   │   ├── Dashboard.tsx
@@ -226,7 +228,8 @@ ai-workbench/
 │   │   │   └── index.ts
 │   │   ├── utils/
 │   │   │   ├── cn.ts
-│   │   │   └── helpers.ts
+│   │   │   ├── helpers.ts
+│   │   │   └── resultRenderers.tsx
 │   │   ├── App.tsx
 │   │   ├── main.tsx
 │   │   └── index.css

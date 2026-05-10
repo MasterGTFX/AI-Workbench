@@ -250,9 +250,13 @@ def call_llm(
     )
 
     if images:
-        content: List[dict] = [{"type": "text", "text": user_prompt}]
+        content: List[dict] = []
+        if user_prompt:
+            content.append({"type": "text", "text": user_prompt})
         for img_url in images:
             content.append({"type": "image_url", "image_url": {"url": img_url}})
+        if not content:
+            content = [{"type": "text", "text": "Describe the image(s)."}]
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": content},

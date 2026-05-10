@@ -45,6 +45,7 @@ import {
 	copyToClipboard,
 	copyToClipboardRich,
 	renderMarkdownToHtml,
+	jsonToMarkdown,
 	downloadJson,
 	downloadMarkdown,
 } from "@/utils/helpers";
@@ -102,7 +103,7 @@ export default function PresetEditor() {
 	const [loading, setLoading] = useState(!isNew);
 	const [saving, setSaving] = useState(false);
 	const [activeTab, setActiveTab] = useState(
-		searchParams.get("tab") || "configure",
+		searchParams.get("tab") || (isNew ? "configure" : "run"),
 	);
 	const [selectedFieldId, setSelectedFieldId] = useState<number | "new" | null>(
 		null,
@@ -352,8 +353,8 @@ export default function PresetEditor() {
 			toast.error("Save the preset before running");
 			return;
 		}
-		if (!runInput.trim()) {
-			toast.error("Input is required");
+		if (!runInput.trim() && attachedImages.length === 0) {
+			toast.error("Input or an image is required");
 			return;
 		}
 		setRunning(true);
@@ -470,9 +471,9 @@ export default function PresetEditor() {
 					<div className="overflow-x-auto">
 						<Tabs value={activeTab} onValueChange={handleTabChange}>
 							<TabsList>
-								<TabsTrigger value="configure">Configure</TabsTrigger>
-								<TabsTrigger value="schema">Schema</TabsTrigger>
 								<TabsTrigger value="run">Run</TabsTrigger>
+								<TabsTrigger value="schema">Schema</TabsTrigger>
+								<TabsTrigger value="configure">Configure</TabsTrigger>
 								<TabsTrigger value="history">History</TabsTrigger>
 							</TabsList>
 						</Tabs>
@@ -1011,21 +1012,35 @@ export default function PresetEditor() {
 										type="file"
 										accept="image/*"
 										multiple
-										className="hidden"
-										onChange={(e) => {
+										className="sr-only"
+										onChange={async (e) => {
 											const files = e.target.files;
-											if (!files) return;
-											const loaded: { name: string; dataUrl: string }[] = [];
-											Array.from(files).forEach((file) => {
-												const reader = new FileReader();
-												reader.onload = (ev) => {
-													loaded.push({ name: file.name, dataUrl: ev.target?.result as string });
-													if (loaded.length === files.length) {
-														setAttachedImages((prev) => [...prev, ...loaded]);
-													}
-												};
-												reader.readAsDataURL(file);
-											});
+											if (!files || files.length === 0) return;
+											const fileArray = Array.from(files);
+											const results = await Promise.all(
+												fileArray.map((file) =>
+													new Promise<{ name: string; dataUrl: string } | null>((resolve) => {
+														const reader = new FileReader();
+														reader.onload = (ev) => {
+															const dataUrl = ev.target?.result as string | undefined;
+															if (dataUrl) {
+																resolve({ name: file.name, dataUrl });
+															} else {
+																resolve(null);
+															}
+														};
+														reader.onerror = () => resolve(null);
+														reader.readAsDataURL(file);
+													}),
+												),
+											);
+											const loaded = results.filter((r): r is { name: string; dataUrl: string } => r !== null);
+											if (loaded.length < fileArray.length) {
+												toast.error(`Failed to load ${fileArray.length - loaded.length} image(s)`);
+											}
+											if (loaded.length > 0) {
+												setAttachedImages((prev) => [...prev, ...loaded]);
+											}
 											e.target.value = "";
 										}}
 									/>
@@ -1348,8 +1363,7 @@ export default function PresetEditor() {
 												size="sm"
 												className="gap-1"
 												onClick={() => {
-													const md =
-														"```json\n" + (runResult.output || "") + "\n```";
+													const md = jsonToMarkdown(runResult.output || "");
 													copyToClipboard(md).then(() =>
 														toast.success("Copied Markdown"),
 													);
@@ -1376,7 +1390,7 @@ export default function PresetEditor() {
 												className="gap-1"
 												onClick={() =>
 													downloadMarkdown(
-														"```json\n" + (runResult.output || "") + "\n```",
+														jsonToMarkdown(runResult.output || ""),
 														`result-${runResult.id}.md`,
 													)
 												}

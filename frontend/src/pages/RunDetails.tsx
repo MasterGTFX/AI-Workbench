@@ -22,7 +22,9 @@ import {
   copyToClipboard,
   copyToClipboardRich,
   renderMarkdownToHtml,
+  jsonToMarkdown,
   downloadJson,
+  downloadMarkdown,
 } from "@/utils/helpers";
 import {
   renderResultValue,
@@ -61,6 +63,18 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
   function handleCopyResult() {
     if (!run?.output) return;
     copyToClipboard(run.output).then(() => toast.success("Result copied"));
+  }
+
+  function handleCopyMarkdown() {
+    if (!run?.output) return;
+    const md = jsonToMarkdown(run.output);
+    copyToClipboard(md).then(() => toast.success("Markdown copied"));
+  }
+
+  function handleDownloadMarkdown() {
+    if (!run?.output) return;
+    const md = jsonToMarkdown(run.output);
+    downloadMarkdown(md, `run-${run.id}.md`);
   }
 
   function handleDownloadAll() {
@@ -413,6 +427,24 @@ export default function RunDetails({ runId, open, onClose, onRunAgain }: RunDeta
                 >
                   <Copy className="h-4 w-4" />
                   Copy Result
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleCopyMarkdown}
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy Markdown
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleDownloadMarkdown}
+                >
+                  <Download className="h-4 w-4" />
+                  Download Markdown
                 </Button>
                 <Button
                   variant="outline"

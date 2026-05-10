@@ -18,7 +18,7 @@ backend/
   app/
     main.py          # FastAPI app, CORS, lifespan, routers, /api/health
     database.py      # SQLite engine, SessionLocal
-    models.py        # SQLModel tables: Provider, Preset, SchemaField, Run
+    models.py        # SQLModel tables: Provider, Preset, SchemaField (with nested properties), Run
     schemas.py       # Pydantic request/response models
     crud.py          # Database operations
     llm.py           # OpenAI client, schema building, prompt rendering, validation, preset generation
@@ -34,10 +34,12 @@ frontend/
     utils/
       cn.ts          # clsx + tailwind-merge
       helpers.ts     # formatDate, formatDuration, tagColor, buildJsonSchema, download/copy helpers, markdown rendering
+      resultRenderers.tsx # React components for rendering individual schema field results
     components/
       ui/            # Reusable UI primitives (Button, Input, Dialog, Tabs, Select, etc.)
       Layout.tsx     # Sidebar + Outlet
       Sidebar.tsx    # Navigation, active provider card, provider switcher + model picker dialog
+      SchemaNestedEditor.tsx # Editor for building nested object schemas
     pages/
       Dashboard.tsx       # Presets list, search, filter, sort, pagination, table/card views
       PresetEditor.tsx    # Configure / Schema / Run / History tabs, AI generation, run overrides
@@ -101,7 +103,7 @@ rm backend/app.db
 
 - The OpenAI client is initialized per-request with the provider's `base_url` and key.
 - `response_format: {type: "json_schema", json_schema: {...}}` is used when the API supports it; falls back to plain JSON on error.
-- Schema fields support: `string`, `number`, `integer`, `boolean`, `enum`, `list[string]`, `list[number]`, `object`, `list[object]`.
+- Schema fields support: `string`, `number`, `integer`, `boolean`, `enum`, `list[string]`, `list[number]`, `object`, `list[object]`. Nested fields for objects are supported via `properties`.
 - Preset model parameters (`temperature`, `max_completion_tokens`, `top_p`, `frequency_penalty`, `presence_penalty`, `reasoning_effort`, `stream`) are all **optional**.
 - Runs support **overrides** for: `model`, `system_prompt`, `user_prompt_template`, and all numeric params.
 - **Preset generation**: `POST /api/presets/generate/` uses the active provider to generate a complete preset draft from a natural-language prompt.
@@ -110,3 +112,4 @@ rm backend/app.db
 - Frontend proxy in `vite.config.ts` forwards `/api` to `localhost:8000`.
 - Markdown in string result fields is rendered via `marked` and styled with `.markdown-body` CSS.
 - Rich clipboard copy (`copyToClipboardRich`) writes both `text/html` and `text/plain` for pasting formatted output.
+- **Documentation**: Always update project documentation (`README.md`, `AGENTS.md`) when it makes sense after modifying the codebase.

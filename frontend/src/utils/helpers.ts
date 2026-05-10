@@ -141,6 +141,55 @@ export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
 
+export function jsonToMarkdown(json: any): string {
+  let data = json;
+  if (typeof json === "string") {
+    try {
+      data = JSON.parse(json);
+    } catch {
+      return json;
+    }
+  }
+
+  if (typeof data !== "object" || data === null) {
+    return String(data);
+  }
+
+  let markdown = "";
+
+  for (const [key, value] of Object.entries(data)) {
+    // Convert snake_case or camelCase to Title Case with spaces
+    const title = key
+      .replace(/_/g, " ")
+      .replace(/([A-Z])/g, " $1")
+      .trim()
+      .split(/\s+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+    markdown += `# ${title}\n`;
+
+    if (Array.isArray(value)) {
+      markdown += value
+        .map((item) => {
+          if (typeof item === "object" && item !== null) {
+            return `* ${JSON.stringify(item)}`;
+          }
+          return `* ${item}`;
+        })
+        .join("\n");
+    } else if (typeof value === "object" && value !== null) {
+      markdown += "```json\n" + JSON.stringify(value, null, 2) + "\n```";
+    } else {
+      markdown += value;
+    }
+
+    markdown += "\n\n";
+  }
+
+  return markdown.trim();
+}
+
 export function renderMarkdownToHtml(text: string): string {
   return marked.parse(text, { async: false, breaks: true, gfm: true }) as string;
 }
